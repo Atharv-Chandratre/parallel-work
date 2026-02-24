@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-board-bg: #f5f5f5;
+  --color-column-bg: #ffffff;
+  --color-card-bg: #ffffff;
+  --color-card-border: #e5e5e5;
+  --color-muted: #737373;
+}
+
+.dark {
+  --color-board-bg: #0a0a0a;
+  --color-column-bg: #171717;
+  --color-card-bg: #1c1c1c;
+  --color-card-border: #2a2a2a;
+  --color-muted: #a3a3a3;
+}
+
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #404040 transparent;
+}

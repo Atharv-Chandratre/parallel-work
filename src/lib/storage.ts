@@ -1,25 +1,26 @@
 import { Board } from "./types";
 
-const STORAGE_KEY = "parallel-board";
-
 export const storage = {
-  loadBoard(): Board | null {
-    if (typeof window === "undefined") return null;
+  async loadBoard(): Promise<Board | null> {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw) as Board;
+      const res = await fetch("/api/board");
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data as Board | null;
     } catch {
       return null;
     }
   },
 
-  saveBoard(board: Board): void {
-    if (typeof window === "undefined") return;
+  async saveBoard(board: Board): Promise<void> {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(board));
+      await fetch("/api/board", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(board),
+      });
     } catch {
-      console.error("Failed to save board to localStorage");
+      console.error("Failed to save board");
     }
   },
 };

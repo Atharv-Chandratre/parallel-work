@@ -7,15 +7,13 @@ type BoardState = {
   board: Board;
   initialized: boolean;
 
-  initialize: () => void;
+  initialize: () => Promise<void>;
 
-  // Column actions
   addColumn: (title: string) => void;
   renameColumn: (columnId: string, title: string) => void;
   deleteColumn: (columnId: string) => void;
   moveColumn: (fromIndex: number, toIndex: number) => void;
 
-  // Task actions
   addTask: (columnId: string, title: string) => void;
   updateTask: (
     columnId: string,
@@ -35,6 +33,9 @@ type BoardState = {
     fromIndex: number,
     toIndex: number
   ) => void;
+
+  exportBoard: () => string;
+  importBoard: (board: Board) => void;
 };
 
 const createDefaultBoard = (): Board => ({
@@ -42,14 +43,21 @@ const createDefaultBoard = (): Board => ({
   columns: [],
 });
 
-const persist = (board: Board) => storage.saveBoard(board);
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+const persist = (board: Board) => {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    storage.saveBoard(board);
+  }, 300);
+};
 
 export const useBoardStore = create<BoardState>((set, get) => ({
   board: createDefaultBoard(),
   initialized: false,
 
-  initialize: () => {
-    const saved = storage.loadBoard();
+  initialize: async () => {
+    const saved = await storage.loadBoard();
     set({
       board: saved ?? createDefaultBoard(),
       initialized: true,
@@ -261,5 +269,14 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       persist(board);
       return { board };
     });
+  },
+
+  exportBoard: () => {
+    return JSON.stringify(get().board, null, 2);
+  },
+
+  importBoard: (board: Board) => {
+    set({ board });
+    persist(board);
   },
 }));

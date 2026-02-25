@@ -56,11 +56,19 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
     borderLeft: `3px solid ${statusColor}`,
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (isRenaming) return;
+    const target = e.target as HTMLElement;
+    if (target.closest("button") || target.closest("input") || target.closest("textarea")) return;
+    setExpanded(!expanded);
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`group rounded-lg border border-[var(--color-card-border)] bg-[var(--color-card-bg)] transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 ${isDragging ? "opacity-50 shadow-lg" : ""}`}
+      onClick={handleCardClick}
+      className={`group rounded-lg border border-[var(--color-card-border)] bg-[var(--color-card-bg)] transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${isDragging ? "opacity-50 shadow-lg" : ""}`}
     >
       <div className="flex items-start gap-2 p-3">
         <div
@@ -100,18 +108,17 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
               className="w-full min-w-0 rounded bg-[var(--color-card-bg)] px-1.5 py-0.5 text-sm font-medium text-zinc-800 dark:text-zinc-100 outline-none border border-[var(--color-card-border)] focus:border-blue-500 cursor-text"
             />
           ) : (
-            <button
-              onClick={() => setExpanded(!expanded)}
+            <span
               onDoubleClick={(e) => {
                 e.stopPropagation();
                 setEditTitle(task.title);
                 setIsRenaming(true);
               }}
-              className="w-full min-w-0 text-left text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-white cursor-pointer truncate block"
-              title="Click to expand, double-click to rename"
+              className="w-full min-w-0 text-left text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate block select-none"
+              title="Double-click to rename"
             >
               {task.title}
-            </button>
+            </span>
           )}
           <div className="mt-1.5 min-w-0">
             <StatusBadge status={task.status} />

@@ -114,7 +114,7 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
                 setEditTitle(task.title);
                 setIsRenaming(true);
               }}
-              className="w-full min-w-0 text-left text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate block select-none"
+              className="w-full min-w-0 text-left text-sm font-medium text-zinc-700 dark:text-zinc-200 block select-none break-words"
               title="Double-click to rename"
             >
               {task.title}

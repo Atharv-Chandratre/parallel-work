@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Task, STATUS_CONFIG } from "@/lib/types";
 import { useBoardStore } from "@/store/boardStore";
 import StatusBadge from "./StatusBadge";
@@ -15,8 +15,26 @@ type TaskCardProps = {
 
 export default function TaskCard({ task, columnId }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
+  const renameInputRef = useRef<HTMLInputElement>(null);
   const cycleTaskStatus = useBoardStore((s) => s.cycleTaskStatus);
+  const updateTask = useBoardStore((s) => s.updateTask);
   const deleteTask = useBoardStore((s) => s.deleteTask);
+
+  useEffect(() => {
+    if (isRenaming) renameInputRef.current?.focus();
+  }, [isRenaming]);
+
+  const saveRename = () => {
+    const trimmed = editTitle.trim();
+    if (trimmed && trimmed !== task.title) {
+      updateTask(columnId, task.id, { title: trimmed });
+    } else {
+      setEditTitle(task.title);
+    }
+    setIsRenaming(false);
+  };
 
   const {
     attributes,
@@ -64,13 +82,37 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
             <circle cx="11" cy="13" r="1.5" />
           </svg>
         </div>
-        <div className="flex-1 min-w-0 grid" style={{ gridTemplateColumns: "minmax(0, min-content)" }}>
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="min-w-0 text-left text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-white cursor-pointer truncate block"
-          >
-            {task.title}
-          </button>
+        <div className="flex-1 min-w-0">
+          {isRenaming ? (
+            <input
+              ref={renameInputRef}
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={saveRename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveRename();
+                if (e.key === "Escape") {
+                  setEditTitle(task.title);
+                  setIsRenaming(false);
+                }
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="w-full min-w-0 rounded bg-[var(--color-card-bg)] px-1.5 py-0.5 text-sm font-medium text-zinc-800 dark:text-zinc-100 outline-none border border-[var(--color-card-border)] focus:border-blue-500 cursor-text"
+            />
+          ) : (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                setEditTitle(task.title);
+                setIsRenaming(true);
+              }}
+              className="w-full min-w-0 text-left text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-white cursor-pointer truncate block"
+              title="Click to expand, double-click to rename"
+            >
+              {task.title}
+            </button>
+          )}
           <div className="mt-1.5 min-w-0">
             <StatusBadge status={task.status} />
           </div>

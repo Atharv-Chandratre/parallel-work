@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Task } from "@/lib/types";
 import { useBoardStore } from "@/store/boardStore";
 
@@ -30,10 +30,7 @@ function formatElapsed(startTs: number): string {
 
 export default function TaskDetail({ task, columnId }: TaskDetailProps) {
   const [notes, setNotes] = useState(task.notes);
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editTitle, setEditTitle] = useState(task.title);
   const updateTask = useBoardStore((s) => s.updateTask);
-  const titleRef = useRef<HTMLInputElement>(null);
   const [elapsed, setElapsed] = useState("");
 
   useEffect(() => {
@@ -46,52 +43,14 @@ export default function TaskDetail({ task, columnId }: TaskDetailProps) {
     }
   }, [task.status, task.startedAt]);
 
-  useEffect(() => {
-    if (isEditingTitle) titleRef.current?.focus();
-  }, [isEditingTitle]);
-
   const saveNotes = () => {
     if (notes !== task.notes) {
       updateTask(columnId, task.id, { notes });
     }
   };
 
-  const saveTitle = () => {
-    const trimmed = editTitle.trim();
-    if (trimmed && trimmed !== task.title) {
-      updateTask(columnId, task.id, { title: trimmed });
-    } else {
-      setEditTitle(task.title);
-    }
-    setIsEditingTitle(false);
-  };
-
   return (
     <div className="border-t border-[var(--color-card-border)] bg-zinc-50/50 dark:bg-zinc-900/30 px-3 pb-3 pt-2 rounded-b-lg">
-      {isEditingTitle ? (
-        <input
-          ref={titleRef}
-          value={editTitle}
-          onChange={(e) => setEditTitle(e.target.value)}
-          onBlur={saveTitle}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") saveTitle();
-            if (e.key === "Escape") {
-              setEditTitle(task.title);
-              setIsEditingTitle(false);
-            }
-          }}
-          className="mb-2 w-full bg-transparent text-sm font-medium text-zinc-800 dark:text-zinc-200 outline-none border-b border-blue-500 pb-0.5"
-        />
-      ) : (
-        <button
-          onClick={() => setIsEditingTitle(true)}
-          className="mb-2 text-left text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
-        >
-          Edit title
-        </button>
-      )}
-
       <div className="space-y-1">
         <label className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Notes</label>
         <textarea

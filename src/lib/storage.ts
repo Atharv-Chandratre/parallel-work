@@ -1,26 +1,80 @@
 import { Board } from "./types";
 
-export const storage = {
-  async loadBoard(): Promise<Board | null> {
+const STORAGE_KEY = "parallel-board";
+
+const isServer =
+  typeof window === "undefined" ||
+  process.env.NEXT_PUBLIC_STORAGE === "localStorage";
+
+function useLocalStorage(): boolean {
+  if (typeof window === "undefined") return false;
+  return process.env.NEXT_PUBLIC_STORAGE === "localStorage" || !canUseApi();
+}
+
+let apiAvailable: boolean | null = null;
+
+function canUseApi(): boolean {
+  if (apiAvailable !== null) return apiAvailable;
+  return true;
+}
+
+const localStorageBackend = {
+  loadBoard(): Board | null {
     try {
-      const res = await fetch("/api/board");
-      if (!res.ok) return null;
-      const data = await res.json();
-      return data as Board | null;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw) as Board;
     } catch {
       return null;
     }
   },
 
-  async saveBoard(board: Board): Promise<void> {
+  saveBoard(board: Board): void {
     try {
-      await fetch("/api/board", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(board),
-      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(board));
     } catch {
-      console.error("Failed to save board");
+      console.error("Failed to save board to localStorage");
+    }
+  },
+};
+
+export const storage = {
+  async loadBoard(): Promise<Board | null> {
+    if (typeof window === "undefined") return null;
+
+    try {
+      const res = await fetch("/api/board");
+      if (res.ok) {
+        const data = await res.json();
+        apiAvailable = true;
+        if (data) return data as Board;
+        // API works but no data on server -- check localStorage for existing data
+        return localStorageBackend.loadBoard();
+      }
+    } catch {
+      // API not available (e.g. Vercel serverless with no persistent disk)
+    }
+
+    apiAvailable = false;
+    return localStorageBackend.loadBoard();
+  },
+
+  async saveBoard(board: Board): Promise<void> {
+    if (typeof window === "undefined") return;
+
+    // Always save to localStorage as a fallback/backup
+    localStorageBackend.saveBoard(board);
+
+    if (apiAvailable) {
+      try {
+        await fetch("/api/board", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(board),
+        });
+      } catch {
+        // API write failed, localStorage already has the data
+      }
     }
   },
 };

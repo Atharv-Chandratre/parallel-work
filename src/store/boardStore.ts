@@ -21,7 +21,7 @@ type BoardState = {
     updates: Partial<Pick<Task, "title" | "notes" | "status">>
   ) => void;
   deleteTask: (columnId: string, taskId: string) => void;
-  cycleTaskStatus: (columnId: string, taskId: string) => void;
+  cycleTaskStatus: (columnId: string, taskId: string, direction?: number) => void;
   reorderTask: (
     columnId: string,
     fromIndex: number,
@@ -52,14 +52,39 @@ const persist = (board: Board) => {
   }, 300);
 };
 
+const OLD_TO_NEW_STATUS: Record<string, TaskStatus> = {
+  queued: "todo",
+  "in-progress": "queued",
+  review: "in-review",
+  done: "done",
+};
+
+const VALID_STATUSES: TaskStatus[] = ["todo", "queued", "in-review", "done"];
+
+function migrateBoard(board: Board): Board {
+  return {
+    ...board,
+    columns: board.columns.map((col) => ({
+      ...col,
+      tasks: col.tasks.map((task) => {
+        const status = VALID_STATUSES.includes(task.status as TaskStatus)
+          ? (task.status as TaskStatus)
+          : OLD_TO_NEW_STATUS[task.status] ?? "todo";
+        return { ...task, status };
+      }),
+    })),
+  };
+}
+
 export const useBoardStore = create<BoardState>((set, get) => ({
   board: createDefaultBoard(),
   initialized: false,
 
   initialize: async () => {
     const saved = await storage.loadBoard();
+    const board = saved ? migrateBoard(saved) : createDefaultBoard();
     set({
-      board: saved ?? createDefaultBoard(),
+      board,
       initialized: true,
     });
   },
@@ -132,7 +157,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           const newTask: Task = {
             id: nanoid(),
             title,
-            status: "queued" as TaskStatus,
+            status: "todo" as TaskStatus,
             notes: "",
             order: col.tasks.length,
             createdAt: Date.now(),
@@ -156,7 +181,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             tasks: col.tasks.map((task) => {
               if (task.id !== taskId) return task;
               const updated = { ...task, ...updates };
-              if (updates.status === "in-progress" && !task.startedAt) {
+              if (updates.status === "queued" && !task.startedAt) {
                 updated.startedAt = Date.now();
               }
               if (updates.status === "done" && !task.completedAt) {
@@ -198,20 +223,22 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     });
   },
 
-  cycleTaskStatus: (columnId, taskId) => {
+  cycleTaskStatus: (columnId, taskId, direction = 1) => {
     const state = get();
     const col = state.board.columns.find((c) => c.id === columnId);
     const task = col?.tasks.find((t) => t.id === taskId);
     if (!task) return;
 
     const statusOrder: TaskStatus[] = [
+      "todo",
       "queued",
-      "in-progress",
-      "review",
+      "in-review",
       "done",
     ];
     const currentIndex = statusOrder.indexOf(task.status);
-    const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
+    const nextIndex =
+      (currentIndex + direction + statusOrder.length) % statusOrder.length;
+    const nextStatus = statusOrder[nextIndex];
 
     get().updateTask(columnId, taskId, { status: nextStatus });
   },
@@ -276,7 +303,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   importBoard: (board: Board) => {
-    set({ board });
-    persist(board);
+    const migrated = migrateBoard(board);
+    set({ board: migrated });
+    persist(migrated);
   },
 }));

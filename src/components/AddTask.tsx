@@ -41,7 +41,7 @@ export default function AddTask({ columnId }: AddTaskProps) {
     return (
       <button
         onClick={() => setIsAdding(true)}
-        className="w-full rounded-lg px-3 py-2 text-left text-sm text-[var(--color-muted)] transition-colors hover:bg-[var(--color-card-bg)] hover:text-zinc-700 dark:hover:text-white cursor-pointer"
+        className="w-full rounded-lg border border-dashed border-transparent px-3 py-2 text-left text-sm text-[var(--color-muted)] transition-all hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-[var(--color-card-bg)] hover:text-zinc-700 dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 cursor-pointer"
       >
         + Add task
       </button>
@@ -60,12 +60,12 @@ export default function AddTask({ columnId }: AddTaskProps) {
           if (!title.trim()) setIsAdding(false);
         }}
         placeholder="Task title..."
-        className="w-full bg-transparent text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none"
+        className="w-full min-h-0 px-2 py-1.5 bg-transparent text-sm leading-normal text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-inset"
       />
       <div className="mt-2 flex gap-2">
         <button
           onClick={handleSubmit}
-          className="rounded px-2.5 py-1 text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors cursor-pointer"
+          className="rounded px-2.5 py-1 text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 focus-visible:ring-offset-1"
         >
           Add
         </button>

@@ -2,21 +2,25 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-board-bg: #f5f5f5;
+  --color-board-bg: #ebebeb;
   --color-column-bg: #ffffff;
   --color-card-bg: #ffffff;
-  --color-card-border: #e5e5e5;
+  --color-card-border: #e0e0e0;
   --color-muted: #737373;
 }
 
 .dark {
   --color-board-bg: #0a0a0a;
   --color-column-bg: #171717;
-  --color-card-bg: #1c1c1c;
-  --color-card-border: #2a2a2a;
+  --color-card-bg: #1f1f1f;
+  --color-card-border: #333333;
   --color-muted: #a3a3a3;
 }
 
@@ -24,7 +28,54 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+  border-radius: inherit;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: #404040 transparent;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: #27272a;
+  color: #e4e4e7;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 50;
+}
+
+.dark [data-tooltip]::after {
+  background: #3f3f46;
+  color: #fafafa;
+}
+
+[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }

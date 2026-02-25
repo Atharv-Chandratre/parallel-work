@@ -82,34 +82,44 @@ export default function Header() {
   };
 
   const allTasks = columns.flatMap((c) => c.tasks);
-  const inProgress = allTasks.filter((t) => t.status === "in-progress").length;
-  const review = allTasks.filter((t) => t.status === "review").length;
   const queued = allTasks.filter((t) => t.status === "queued").length;
+  const inReview = allTasks.filter((t) => t.status === "in-review").length;
+  const todo = allTasks.filter((t) => t.status === "todo").length;
 
   const btnClass =
     "rounded-lg p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer";
 
   return (
-    <header className="flex items-center justify-between border-b border-[var(--color-card-border)] px-5 py-3 bg-[var(--color-column-bg)]">
+    <header className="relative z-10 flex items-center justify-between border-b border-[var(--color-card-border)] px-5 py-3 bg-[var(--color-column-bg)] shadow-sm backdrop-blur-sm">
       <div className="flex items-center gap-4">
-        <h1 className="text-base font-bold tracking-tight text-zinc-800 dark:text-zinc-100">
-          Parallel
-        </h1>
-        <div className="hidden sm:flex items-center gap-3 text-xs">
-          {inProgress > 0 && (
-            <span className="flex items-center gap-1.5 text-blue-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
-              {inProgress} in progress
-            </span>
-          )}
-          {review > 0 && (
-            <span className="flex items-center gap-1.5 text-amber-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-              {review} needs review
-            </span>
-          )}
+        <div className="flex items-center gap-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-blue-500">
+            <rect x="3" y="2" width="4" height="20" rx="2" fill="currentColor" opacity="0.9" />
+            <rect x="10" y="5" width="4" height="14" rx="2" fill="currentColor" opacity="0.6" />
+            <rect x="17" y="8" width="4" height="8" rx="2" fill="currentColor" opacity="0.35" />
+          </svg>
+          <h1 className="text-base font-bold tracking-tight text-zinc-800 dark:text-zinc-100">
+            Parallel
+          </h1>
+        </div>
+        <div className="hidden sm:flex items-center gap-2 text-xs">
           {queued > 0 && (
-            <span className="text-zinc-500">{queued} queued</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-yellow-500 font-medium">
+              <span className="h-1.5 w-1.5 rounded-full bg-yellow-500 animate-pulse" />
+              {queued} queued
+            </span>
+          )}
+          {inReview > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-blue-400 font-medium">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+              {inReview} in review
+            </span>
+          )}
+          {todo > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-500/10 px-2.5 py-0.5 text-zinc-500 dark:text-zinc-400 font-medium">
+              <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
+              {todo} to do
+            </span>
           )}
         </div>
       </div>
@@ -118,6 +128,7 @@ export default function Header() {
         <button
           onClick={handleExport}
           className={btnClass}
+          data-tooltip="Export"
           title="Export board as JSON"
         >
           <svg
@@ -139,6 +150,7 @@ export default function Header() {
         <button
           onClick={() => fileInputRef.current?.click()}
           className={btnClass}
+          data-tooltip="Import"
           title="Import board from JSON"
         >
           <svg
@@ -168,6 +180,7 @@ export default function Header() {
         <button
           onClick={toggleDark}
           className={btnClass}
+          data-tooltip={dark ? "Light mode" : "Dark mode"}
           title={dark ? "Switch to light mode" : "Switch to dark mode"}
         >
           {dark ? (

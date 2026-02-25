@@ -3,7 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useBoardStore } from "@/store/boardStore";
 
-export default function AddColumn() {
+type AddColumnProps = {
+  /** When true, use compact height instead of filling available space (for empty state) */
+  compact?: boolean;
+};
+
+export default function AddColumn({ compact = false }: AddColumnProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [title, setTitle] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,7 +42,7 @@ export default function AddColumn() {
     return (
       <button
         onClick={() => setIsAdding(true)}
-        className="flex h-full min-h-[200px] w-72 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500 transition-colors hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer"
+        className={`flex w-72 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500 transition-colors hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer ${compact ? "h-[100px] min-h-[100px]" : "h-full min-h-[120px]"}`}
       >
         <span className="text-sm font-medium">+ Add Project</span>
       </button>
@@ -58,7 +63,7 @@ export default function AddColumn() {
       <div className="mt-2 flex gap-2">
         <button
           onClick={handleSubmit}
-          className="rounded px-3 py-1.5 text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors cursor-pointer"
+          className="rounded px-3 py-1.5 text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 focus-visible:ring-offset-1"
         >
           Add Project
         </button>

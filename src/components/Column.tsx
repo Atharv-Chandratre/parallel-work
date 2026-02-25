@@ -4,7 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import {
   SortableContext,
   verticalListSortingStrategy,
+  useSortable,
 } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
 import { Column as ColumnType } from "@/lib/types";
 import { useBoardStore } from "@/store/boardStore";
@@ -15,6 +17,41 @@ type ColumnProps = {
   column: ColumnType;
 };
 
+function ColumnProgressBar({ column }: { column: ColumnType }) {
+  const total = column.tasks.length;
+  if (total === 0) return null;
+
+  const counts = {
+    todo: column.tasks.filter((t) => t.status === "todo").length,
+    queued: column.tasks.filter((t) => t.status === "queued").length,
+    "in-review": column.tasks.filter((t) => t.status === "in-review").length,
+    done: column.tasks.filter((t) => t.status === "done").length,
+  };
+
+  const segments = [
+    { key: "done", color: "#10b981", count: counts.done },
+    { key: "in-review", color: "#3b82f6", count: counts["in-review"] },
+    { key: "queued", color: "#eab308", count: counts.queued },
+    { key: "todo", color: "#737373", count: counts.todo },
+  ].filter((s) => s.count > 0);
+
+  return (
+    <div className="flex h-1 w-full gap-px overflow-hidden rounded-full mx-3 mb-1.5" style={{ maxWidth: "calc(100% - 24px)" }}>
+      {segments.map((seg) => (
+        <div
+          key={seg.key}
+          className="h-full rounded-full transition-all duration-300"
+          style={{
+            width: `${(seg.count / total) * 100}%`,
+            backgroundColor: seg.color,
+            opacity: 0.7,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function Column({ column }: ColumnProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(column.title);
@@ -24,10 +61,27 @@ export default function Column({ column }: ColumnProps) {
   const deleteColumn = useBoardStore((s) => s.deleteColumn);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { setNodeRef } = useDroppable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortableRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: `column-${column.id}`,
     data: { type: "column", columnId: column.id },
   });
+
+  const { setNodeRef: setDroppableRef } = useDroppable({
+    id: `column-droppable-${column.id}`,
+    data: { type: "column", columnId: column.id },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   useEffect(() => {
     if (isEditing) inputRef.current?.focus();
@@ -48,10 +102,16 @@ export default function Column({ column }: ColumnProps) {
   };
 
   return (
-    <div className="flex w-72 shrink-0 flex-col rounded-xl bg-[var(--color-column-bg)] max-h-full">
+    <div
+      ref={setSortableRef}
+      style={style}
+      className={`flex w-72 shrink-0 flex-col rounded-xl bg-[var(--color-column-bg)] shadow-sm dark:shadow-none max-h-full ${isDragging ? "opacity-50 shadow-lg z-50" : ""}`}
+    >
       <div
-        className="flex items-center gap-2 px-3 pt-3 pb-2"
-        style={{ borderTop: `3px solid ${column.color}`, borderRadius: "12px 12px 0 0" }}
+        className="flex items-center gap-2 px-3 pt-3 pb-2 cursor-grab active:cursor-grabbing"
+        style={{ borderTop: `4px solid ${column.color}`, borderRadius: "12px 12px 0 0" }}
+        {...attributes}
+        {...listeners}
       >
         {isEditing ? (
           <input
@@ -66,13 +126,16 @@ export default function Column({ column }: ColumnProps) {
                 setIsEditing(false);
               }
             }}
-            className="flex-1 bg-transparent text-sm font-semibold text-zinc-800 dark:text-zinc-100 outline-none border-b border-blue-500"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            placeholder="Project name..."
+            className="flex-1 min-w-0 rounded-lg bg-[var(--color-card-bg)] px-3 py-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none border border-[var(--color-card-border)] focus:border-blue-500 cursor-text"
           />
         ) : (
           <h3
             onDoubleClick={() => setIsEditing(true)}
-            className="flex-1 text-sm font-semibold text-zinc-700 dark:text-zinc-200 cursor-default select-none truncate"
-            title="Double-click to rename"
+            className="flex-1 text-sm font-semibold text-zinc-700 dark:text-zinc-200 cursor-grab select-none truncate"
+            title="Double-click to rename, drag to reorder"
           >
             {column.title}
           </h3>
@@ -80,10 +143,10 @@ export default function Column({ column }: ColumnProps) {
         <span className="text-xs text-zinc-500">
           {activeTasks.length}
         </span>
-        <div className="relative">
+        <div className="relative" onPointerDown={(e) => e.stopPropagation()}>
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="text-zinc-600 hover:text-zinc-300 transition-colors cursor-pointer p-0.5"
+            className="rounded-md p-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
           >
             <svg
               width="14"
@@ -133,7 +196,9 @@ export default function Column({ column }: ColumnProps) {
         </div>
       </div>
 
-      <div ref={setNodeRef} className="flex-1 overflow-y-auto px-2 pb-2">
+      <ColumnProgressBar column={column} />
+
+      <div ref={setDroppableRef} className="flex-1 overflow-y-auto px-2 pb-2">
         <div className="mb-2">
           <AddTask columnId={column.id} />
         </div>

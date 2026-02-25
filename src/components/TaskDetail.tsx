@@ -37,7 +37,7 @@ export default function TaskDetail({ task, columnId }: TaskDetailProps) {
   const [elapsed, setElapsed] = useState("");
 
   useEffect(() => {
-    if (task.status === "in-progress" && task.startedAt) {
+    if (task.status === "queued" && task.startedAt) {
       setElapsed(formatElapsed(task.startedAt));
       const interval = setInterval(() => {
         setElapsed(formatElapsed(task.startedAt!));
@@ -67,7 +67,7 @@ export default function TaskDetail({ task, columnId }: TaskDetailProps) {
   };
 
   return (
-    <div className="border-t border-[var(--color-card-border)] px-3 pb-3 pt-2">
+    <div className="border-t border-[var(--color-card-border)] bg-zinc-50/50 dark:bg-zinc-900/30 px-3 pb-3 pt-2 rounded-b-lg">
       {isEditingTitle ? (
         <input
           ref={titleRef}
@@ -92,26 +92,39 @@ export default function TaskDetail({ task, columnId }: TaskDetailProps) {
         </button>
       )}
 
-      <textarea
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        onBlur={saveNotes}
-        placeholder="Add notes... (what to tell the agent, review feedback, etc.)"
-        rows={3}
-        className="w-full resize-none rounded-md bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-2.5 py-2 text-xs text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-colors"
-      />
+      <div className="space-y-1">
+        <label className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Notes</label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={saveNotes}
+          placeholder="What to tell the agent, review feedback, etc."
+          rows={3}
+          className="w-full resize-none rounded-md bg-white dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-2.5 py-2 text-xs text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none focus:border-blue-400 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 transition-all"
+        />
+      </div>
 
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-500">
-        <span>Created: {formatTimestamp(task.createdAt)}</span>
+      <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
+        <span className="inline-flex items-center gap-1">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          {formatTimestamp(task.createdAt)}
+        </span>
         {task.startedAt && (
-          <span>Started: {formatTimestamp(task.startedAt)}</span>
+          <span className="inline-flex items-center gap-1">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            {formatTimestamp(task.startedAt)}
+          </span>
         )}
-        {task.status === "in-progress" && task.startedAt && (
-          <span className="text-blue-400">Elapsed: {elapsed}</span>
+        {task.status === "queued" && task.startedAt && (
+          <span className="inline-flex items-center gap-1 text-blue-400">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {elapsed}
+          </span>
         )}
         {task.completedAt && (
-          <span className="text-green-400">
-            Done: {formatTimestamp(task.completedAt)}
+          <span className="inline-flex items-center gap-1 text-green-400">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {formatTimestamp(task.completedAt)}
           </span>
         )}
       </div>

@@ -1,4 +1,4 @@
-export type TaskStatus = "queued" | "in-progress" | "review" | "done";
+export type TaskStatus = "todo" | "queued" | "in-review" | "done";
 
 export type Task = {
   id: string;
@@ -39,28 +39,28 @@ export const STATUS_CONFIG: Record<
   TaskStatus,
   { label: string; color: string; bgColor: string; next: TaskStatus }
 > = {
-  queued: {
-    label: "Queued",
+  todo: {
+    label: "To Do",
     color: "#737373",
     bgColor: "#26262633",
-    next: "in-progress",
+    next: "queued",
   },
-  "in-progress": {
-    label: "In Progress",
+  queued: {
+    label: "Queued",
+    color: "#eab308",
+    bgColor: "#eab30820",
+    next: "in-review",
+  },
+  "in-review": {
+    label: "In Review",
     color: "#3b82f6",
     bgColor: "#3b82f620",
-    next: "review",
-  },
-  review: {
-    label: "Review",
-    color: "#f59e0b",
-    bgColor: "#f59e0b20",
     next: "done",
   },
   done: {
     label: "Done",
     color: "#10b981",
     bgColor: "#10b98120",
-    next: "queued",
+    next: "todo",
   },
 };

@@ -10,13 +10,17 @@ import {
   useSensors,
   closestCorners,
 } from "@dnd-kit/core";
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { useBoardStore } from "@/store/boardStore";
 import Column from "./Column";
 import AddColumn from "./AddColumn";
 import EmptyState from "./EmptyState";
 
 export default function Board() {
-  const { board, initialized, initialize, reorderTask, moveTaskBetweenColumns } =
+  const { board, initialized, initialize, reorderTask, moveTaskBetweenColumns, moveColumn } =
     useBoardStore();
 
   useEffect(() => {
@@ -92,6 +96,21 @@ export default function Board() {
     if (!over || active.id === over.id) return;
 
     const activeData = active.data.current;
+    const overData = over.data.current;
+
+    if (activeData?.type === "column" && overData?.type === "column") {
+      const fromIndex = board.columns.findIndex(
+        (c) => `column-${c.id}` === active.id
+      );
+      const toIndex = board.columns.findIndex(
+        (c) => `column-${c.id}` === over.id
+      );
+      if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+        moveColumn(fromIndex, toIndex);
+      }
+      return;
+    }
+
     if (activeData?.type !== "task") return;
 
     const activeResult = findColumnAndIndex(active.id as string);
@@ -110,12 +129,14 @@ export default function Board() {
 
   if (board.columns.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4 pt-5">
         <EmptyState />
-        <AddColumn />
+        <AddColumn compact />
       </div>
     );
   }
+
+  const columnIds = board.columns.map((c) => `column-${c.id}`);
 
   return (
     <DndContext
@@ -124,12 +145,17 @@ export default function Board() {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex flex-1 gap-4 overflow-x-auto p-4">
-        {board.columns.map((column) => (
-          <Column key={column.id} column={column} />
-        ))}
-        <AddColumn />
-      </div>
+      <SortableContext
+        items={columnIds}
+        strategy={horizontalListSortingStrategy}
+      >
+        <div className="flex flex-1 gap-4 overflow-x-auto p-4 pt-5">
+          {board.columns.map((column) => (
+            <Column key={column.id} column={column} />
+          ))}
+          <AddColumn />
+        </div>
+      </SortableContext>
     </DndContext>
   );
 }

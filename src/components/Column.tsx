@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
 import { Column as ColumnType } from "@/lib/types";
@@ -36,7 +32,10 @@ function ColumnProgressBar({ column }: { column: ColumnType }) {
   ].filter((s) => s.count > 0);
 
   return (
-    <div className="flex h-1 w-full gap-px overflow-hidden rounded-full mx-3 mb-1.5" style={{ maxWidth: "calc(100% - 24px)" }}>
+    <div
+      className="flex h-1 w-full gap-px overflow-hidden rounded-full mx-3 mb-1.5"
+      style={{ maxWidth: "calc(100% - 24px)" }}
+    >
       {segments.map((seg) => (
         <div
           key={seg.key}
@@ -140,20 +139,13 @@ export default function Column({ column }: ColumnProps) {
             {column.title}
           </h3>
         )}
-        <span className="text-xs text-zinc-500">
-          {activeTasks.length}
-        </span>
+        <span className="text-xs text-zinc-500">{activeTasks.length}</span>
         <div className="relative" onPointerDown={(e) => e.stopPropagation()}>
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="rounded-md p-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <circle cx="12" cy="5" r="2" />
               <circle cx="12" cy="12" r="2" />
               <circle cx="12" cy="19" r="2" />
@@ -161,10 +153,7 @@ export default function Column({ column }: ColumnProps) {
           </button>
           {showMenu && (
             <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setShowMenu(false)}
-              />
+              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
               <div className="absolute right-0 top-6 z-20 w-36 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 py-1 shadow-xl">
                 <button
                   onClick={() => {
@@ -178,11 +167,7 @@ export default function Column({ column }: ColumnProps) {
                 <button
                   onClick={() => {
                     setShowMenu(false);
-                    if (
-                      confirm(
-                        `Delete "${column.title}" and all its tasks?`
-                      )
-                    ) {
+                    if (confirm(`Delete "${column.title}" and all its tasks?`)) {
                       deleteColumn(column.id);
                     }
                   }}
@@ -203,10 +188,7 @@ export default function Column({ column }: ColumnProps) {
           <AddTask columnId={column.id} />
         </div>
 
-        <SortableContext
-          items={taskIds}
-          strategy={verticalListSortingStrategy}
-        >
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           <div className="flex flex-col gap-1.5">
             {activeTasks.map((task) => (
               <TaskCard key={task.id} task={task} columnId={column.id} />
@@ -236,11 +218,7 @@ export default function Column({ column }: ColumnProps) {
             {showDone && (
               <div className="mt-1 flex flex-col gap-1.5">
                 {doneTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    columnId={column.id}
-                  />
+                  <TaskCard key={task.id} task={task} columnId={column.id} />
                 ))}
               </div>
             )}

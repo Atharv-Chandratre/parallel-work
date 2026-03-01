@@ -29,9 +29,7 @@ describe("AddColumn", () => {
     render(<AddColumn />);
 
     await user.click(screen.getByText("+ Add Project"));
-    expect(
-      screen.getByPlaceholderText("Project name...")
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Project name...")).toBeInTheDocument();
   });
 
   it("submit creates column and hides form", async () => {
@@ -52,9 +50,7 @@ describe("AddColumn", () => {
     render(<AddColumn />);
 
     await user.click(screen.getByText("+ Add Project"));
-    expect(
-      screen.getByPlaceholderText("Project name...")
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Project name...")).toBeInTheDocument();
 
     await user.keyboard("{Escape}");
     expect(screen.getByText("+ Add Project")).toBeInTheDocument();
@@ -70,8 +66,6 @@ describe("AddColumn", () => {
     await user.click(screen.getByRole("button", { name: "Add Project" }));
 
     expect(useBoardStore.getState().board.columns).toHaveLength(1);
-    expect(useBoardStore.getState().board.columns[0].title).toBe(
-      "Button Project"
-    );
+    expect(useBoardStore.getState().board.columns[0].title).toBe("Button Project");
   });
 });

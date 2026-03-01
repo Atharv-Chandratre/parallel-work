@@ -14,10 +14,7 @@ export async function GET() {
     if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") {
       return NextResponse.json(null);
     }
-    return NextResponse.json(
-      { error: "Failed to read board" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to read board" }, { status: 500 });
   }
 }
 
@@ -28,9 +25,6 @@ export async function PUT(request: Request) {
     await fs.writeFile(BOARD_FILE, JSON.stringify(board, null, 2), "utf-8");
     return NextResponse.json({ ok: true });
   } catch {
-    return NextResponse.json(
-      { error: "Failed to save board" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to save board" }, { status: 500 });
   }
 }

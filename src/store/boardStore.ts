@@ -22,11 +22,7 @@ type BoardState = {
   ) => void;
   deleteTask: (columnId: string, taskId: string) => void;
   cycleTaskStatus: (columnId: string, taskId: string, direction?: number) => void;
-  reorderTask: (
-    columnId: string,
-    fromIndex: number,
-    toIndex: number
-  ) => void;
+  reorderTask: (columnId: string, fromIndex: number, toIndex: number) => void;
   moveTaskBetweenColumns: (
     fromColumnId: string,
     toColumnId: string,
@@ -69,7 +65,7 @@ function migrateBoard(board: Board): Board {
       tasks: col.tasks.map((task) => {
         const status = VALID_STATUSES.includes(task.status as TaskStatus)
           ? (task.status as TaskStatus)
-          : OLD_TO_NEW_STATUS[task.status] ?? "todo";
+          : (OLD_TO_NEW_STATUS[task.status] ?? "todo");
         return { ...task, status };
       }),
     })),
@@ -112,9 +108,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     set((state) => {
       const board = {
         ...state.board,
-        columns: state.board.columns.map((col) =>
-          col.id === columnId ? { ...col, title } : col
-        ),
+        columns: state.board.columns.map((col) => (col.id === columnId ? { ...col, title } : col)),
       };
       persist(board);
       return { board };
@@ -187,11 +181,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
               if (updates.status === "done" && !task.completedAt) {
                 updated.completedAt = Date.now();
               }
-              if (
-                updates.status &&
-                updates.status !== "done" &&
-                task.completedAt
-              ) {
+              if (updates.status && updates.status !== "done" && task.completedAt) {
                 updated.completedAt = undefined;
               }
               return updated;
@@ -212,9 +202,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           if (col.id !== columnId) return col;
           return {
             ...col,
-            tasks: col.tasks
-              .filter((t) => t.id !== taskId)
-              .map((t, i) => ({ ...t, order: i })),
+            tasks: col.tasks.filter((t) => t.id !== taskId).map((t, i) => ({ ...t, order: i })),
           };
         }),
       };
@@ -229,15 +217,9 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const task = col?.tasks.find((t) => t.id === taskId);
     if (!task) return;
 
-    const statusOrder: TaskStatus[] = [
-      "todo",
-      "queued",
-      "in-review",
-      "done",
-    ];
+    const statusOrder: TaskStatus[] = ["todo", "queued", "in-review", "done"];
     const currentIndex = statusOrder.indexOf(task.status);
-    const nextIndex =
-      (currentIndex + direction + statusOrder.length) % statusOrder.length;
+    const nextIndex = (currentIndex + direction + statusOrder.length) % statusOrder.length;
     const nextStatus = statusOrder[nextIndex];
 
     get().updateTask(columnId, taskId, { status: nextStatus });

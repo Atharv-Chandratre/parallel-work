@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useBoardStore } from "@/store/boardStore";
-import { Board, COLUMN_COLORS } from "@/lib/types";
+import { Board, COLUMN_COLORS, Task } from "@/lib/types";
 
 vi.mock("@/lib/storage", () => ({
   storage: {
@@ -151,9 +151,7 @@ describe("boardStore", () => {
       // Move away and back
       getState().updateTask(columnId, taskId, { status: "in-review" });
       getState().updateTask(columnId, taskId, { status: "queued" });
-      expect(getState().board.columns[0].tasks[0].startedAt).toBe(
-        firstStartedAt
-      );
+      expect(getState().board.columns[0].tasks[0].startedAt).toBe(firstStartedAt);
     });
 
     it("updateTask sets completedAt when moving to done", () => {
@@ -171,9 +169,7 @@ describe("boardStore", () => {
       const taskId = getState().board.columns[0].tasks[0].id;
 
       getState().updateTask(columnId, taskId, { status: "done" });
-      expect(
-        getState().board.columns[0].tasks[0].completedAt
-      ).toBeGreaterThan(0);
+      expect(getState().board.columns[0].tasks[0].completedAt).toBeGreaterThan(0);
 
       getState().updateTask(columnId, taskId, { status: "todo" });
       expect(getState().board.columns[0].tasks[0].completedAt).toBeUndefined();
@@ -351,7 +347,7 @@ describe("boardStore", () => {
               {
                 id: "t1",
                 title: "Task 1",
-                status: "in-progress" as any, // old "in-progress" → new "queued"
+                status: "in-progress" as unknown as Task["status"], // old "in-progress" → new "queued"
                 notes: "",
                 order: 0,
                 createdAt: 1000,
@@ -359,7 +355,7 @@ describe("boardStore", () => {
               {
                 id: "t2",
                 title: "Task 2",
-                status: "review" as any, // old "review" → new "in-review"
+                status: "review" as unknown as Task["status"], // old "review" → new "in-review"
                 notes: "",
                 order: 1,
                 createdAt: 1000,
@@ -367,7 +363,7 @@ describe("boardStore", () => {
               {
                 id: "t3",
                 title: "Task 3",
-                status: "unknown-status" as any, // unknown → falls back to "todo"
+                status: "unknown-status" as unknown as Task["status"], // unknown → falls back to "todo"
                 notes: "",
                 order: 2,
                 createdAt: 1000,

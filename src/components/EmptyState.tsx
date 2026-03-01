@@ -24,16 +24,18 @@ export default function EmptyState() {
           <rect x="14" y="14" width="7" height="7" rx="1" />
         </svg>
       </div>
-      <h2 className="text-lg font-semibold text-zinc-700 dark:text-zinc-200">
-        No projects yet
-      </h2>
+      <h2 className="text-lg font-semibold text-zinc-700 dark:text-zinc-200">No projects yet</h2>
       <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-        Create your first project to start tracking parallel work. Each
-        project becomes a column where you can queue up tasks, mark what
-        your agents are working on, and track what needs review.
+        Create your first project to start tracking parallel work. Each project becomes a column
+        where you can queue up tasks, mark what your agents are working on, and track what needs
+        review.
       </p>
       <p className="text-xs text-zinc-400 dark:text-zinc-500">
-        Click the <span className="font-medium text-zinc-600 dark:text-zinc-300">&quot;+ Add Project&quot;</span> button below to get started
+        Click the{" "}
+        <span className="font-medium text-zinc-600 dark:text-zinc-300">
+          &quot;+ Add Project&quot;
+        </span>{" "}
+        button below to get started
       </p>
     </div>
   );

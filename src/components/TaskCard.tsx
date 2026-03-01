@@ -36,14 +36,7 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
     setIsRenaming(false);
   };
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: "task", task, columnId },
   });
@@ -76,12 +69,7 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
           {...listeners}
           className="mt-0.5 cursor-grab rounded p-0.5 text-zinc-400 dark:text-zinc-600 opacity-0 group-hover:opacity-100 hover:text-zinc-500 dark:hover:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 active:cursor-grabbing transition-all shrink-0"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-          >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
             <circle cx="5" cy="3" r="1.5" />
             <circle cx="11" cy="3" r="1.5" />
             <circle cx="5" cy="8" r="1.5" />
@@ -152,7 +140,14 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
               className={`flex items-center justify-center w-5 h-5 rounded disabled:opacity-100 ${task.status === "todo" ? "text-zinc-400 dark:text-zinc-500 cursor-not-allowed" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer"}`}
               title="Previous status"
             >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
@@ -166,7 +161,14 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
               className={`flex items-center justify-center w-5 h-5 rounded disabled:opacity-100 ${task.status === "done" ? "text-zinc-400 dark:text-zinc-500 cursor-not-allowed" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer"}`}
               title="Next status"
             >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M9 18l6-6-6-6" />
               </svg>
             </button>

@@ -3,9 +3,7 @@ import type { Board } from "@/lib/types";
 
 const mockBoard: Board = {
   id: "test-board",
-  columns: [
-    { id: "c1", title: "Col 1", color: "#000", order: 0, tasks: [] },
-  ],
+  columns: [{ id: "c1", title: "Col 1", color: "#000", order: 0, tasks: [] }],
 };
 
 describe("storage", () => {
@@ -57,9 +55,7 @@ describe("storage", () => {
 
   it("loadBoard falls back to localStorage when API fails", async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
-    Storage.prototype.getItem = vi
-      .fn()
-      .mockReturnValue(JSON.stringify(mockBoard));
+    Storage.prototype.getItem = vi.fn().mockReturnValue(JSON.stringify(mockBoard));
 
     const { storage } = await import("@/lib/storage");
     const result = await storage.loadBoard();
@@ -71,9 +67,7 @@ describe("storage", () => {
       ok: true,
       json: () => Promise.resolve(null),
     });
-    Storage.prototype.getItem = vi
-      .fn()
-      .mockReturnValue(JSON.stringify(mockBoard));
+    Storage.prototype.getItem = vi.fn().mockReturnValue(JSON.stringify(mockBoard));
 
     const { storage } = await import("@/lib/storage");
     const result = await storage.loadBoard();
@@ -102,9 +96,12 @@ describe("storage", () => {
       "parallel-board",
       JSON.stringify(mockBoard)
     );
-    expect(fetch).toHaveBeenCalledWith("/api/board", expect.objectContaining({
-      method: "PUT",
-    }));
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/board",
+      expect.objectContaining({
+        method: "PUT",
+      })
+    );
   });
 
   it("saveBoard no-ops on server", async () => {

@@ -46,9 +46,7 @@ test.describe("Empty state", () => {
   });
 
   test('shows "Add Project" button', async ({ page }) => {
-    await expect(
-      page.getByRole("button", { name: "+ Add Project" })
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "+ Add Project" })).toBeVisible();
   });
 });
 
@@ -102,9 +100,7 @@ test.describe("Task management", () => {
     await expect(page.getByTitle("Status: To Do")).toBeVisible();
   });
 
-  test("cycle task status forward (todo → queued → in-review → done)", async ({
-    page,
-  }) => {
+  test("cycle task status forward (todo → queued → in-review → done)", async ({ page }) => {
     await addTask(page, "Cycle Task");
 
     const taskCard = page.locator(".group").filter({ hasText: "Cycle Task" });
@@ -152,11 +148,13 @@ test.describe("Task management", () => {
 
     // The DnD context's PointerSensor can interfere with native dblclick.
     // Dispatch the dblclick event directly on the task title span via JS.
-    const taskSpan = page.locator('span[title="Double-click to rename"]').filter({ hasText: "Old Task" });
+    const taskSpan = page
+      .locator('span[title="Double-click to rename"]')
+      .filter({ hasText: "Old Task" });
     await taskSpan.dispatchEvent("dblclick");
 
     // After dblclick, the span is replaced by a rename input
-    const renameInput = page.locator('.group input').first();
+    const renameInput = page.locator(".group input").first();
     await expect(renameInput).toBeVisible({ timeout: 5000 });
     await renameInput.fill("New Task Name");
     await renameInput.press("Enter");
@@ -168,7 +166,9 @@ test.describe("Task management", () => {
     await addTask(page, "Notes Task");
 
     // Click the task title to expand
-    const taskSpan = page.locator('span[title="Double-click to rename"]').filter({ hasText: "Notes Task" });
+    const taskSpan = page
+      .locator('span[title="Double-click to rename"]')
+      .filter({ hasText: "Notes Task" });
     await taskSpan.click();
 
     const textarea = page.getByPlaceholder(/What to tell the agent/);
@@ -180,9 +180,7 @@ test.describe("Task management", () => {
     // Collapse and re-expand
     await taskSpan.click();
     await taskSpan.click();
-    await expect(
-      page.getByPlaceholder(/What to tell the agent/)
-    ).toHaveValue("These are my notes");
+    await expect(page.getByPlaceholder(/What to tell the agent/)).toHaveValue("These are my notes");
   });
 });
 

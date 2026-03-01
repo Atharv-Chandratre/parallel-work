@@ -10,9 +10,7 @@ describe("EmptyState", () => {
 
   it("renders instruction text", () => {
     render(<EmptyState />);
-    expect(
-      screen.getByText(/Create your first project to start tracking/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Create your first project to start tracking/)).toBeInTheDocument();
   });
 
   it('mentions "+ Add Project" button', () => {

@@ -42,9 +42,7 @@ describe("TaskDetail", () => {
 
   it("renders notes textarea with current value", () => {
     render(<TaskDetail task={baseTask} columnId="col-1" />);
-    const textarea = screen.getByPlaceholderText(
-      /What to tell the agent/
-    ) as HTMLTextAreaElement;
+    const textarea = screen.getByPlaceholderText(/What to tell the agent/) as HTMLTextAreaElement;
     expect(textarea.value).toBe("Some notes here");
   });
 
@@ -57,9 +55,7 @@ describe("TaskDetail", () => {
     await user.type(textarea, "Updated notes");
     await user.click(document.body);
 
-    expect(useBoardStore.getState().board.columns[0].tasks[0].notes).toBe(
-      "Updated notes"
-    );
+    expect(useBoardStore.getState().board.columns[0].tasks[0].notes).toBe("Updated notes");
   });
 
   it("shows created timestamp", () => {

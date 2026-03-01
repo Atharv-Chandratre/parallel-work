@@ -16,9 +16,7 @@ describe("AddTask", () => {
     useBoardStore.setState({
       board: {
         id: "board-1",
-        columns: [
-          { id: "col-1", title: "Test", color: "#000", order: 0, tasks: [] },
-        ],
+        columns: [{ id: "col-1", title: "Test", color: "#000", order: 0, tasks: [] }],
       },
       initialized: true,
     });
@@ -46,9 +44,7 @@ describe("AddTask", () => {
     await user.type(input, "New Task{Enter}");
 
     expect(useBoardStore.getState().board.columns[0].tasks).toHaveLength(1);
-    expect(useBoardStore.getState().board.columns[0].tasks[0].title).toBe(
-      "New Task"
-    );
+    expect(useBoardStore.getState().board.columns[0].tasks[0].title).toBe("New Task");
     expect(input).toHaveValue("");
   });
 
@@ -68,7 +64,7 @@ describe("AddTask", () => {
     render(<AddTask columnId="col-1" />);
 
     await user.click(screen.getByText("+ Add task"));
-    const input = screen.getByPlaceholderText("Task title...");
+    screen.getByPlaceholderText("Task title...");
     await user.click(document.body);
 
     expect(screen.getByText("+ Add task")).toBeInTheDocument();
@@ -84,8 +80,6 @@ describe("AddTask", () => {
     await user.click(screen.getByText("Add"));
 
     expect(useBoardStore.getState().board.columns[0].tasks).toHaveLength(1);
-    expect(useBoardStore.getState().board.columns[0].tasks[0].title).toBe(
-      "Button Task"
-    );
+    expect(useBoardStore.getState().board.columns[0].tasks[0].title).toBe("Button Task");
   });
 });

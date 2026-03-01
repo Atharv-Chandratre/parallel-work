@@ -14,8 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Parallel — Agentic Coding Work Tracker",
-  description:
-    "Track parallel agentic coding tasks across multiple projects",
+  description: "Track parallel agentic coding tasks across multiple projects",
 };
 
 export default function RootLayout({

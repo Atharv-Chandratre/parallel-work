@@ -2,21 +2,7 @@ import { Board } from "./types";
 
 const STORAGE_KEY = "parallel-board";
 
-const isServer =
-  typeof window === "undefined" ||
-  process.env.NEXT_PUBLIC_STORAGE === "localStorage";
-
-function useLocalStorage(): boolean {
-  if (typeof window === "undefined") return false;
-  return process.env.NEXT_PUBLIC_STORAGE === "localStorage" || !canUseApi();
-}
-
 let apiAvailable: boolean | null = null;
-
-function canUseApi(): boolean {
-  if (apiAvailable !== null) return apiAvailable;
-  return true;
-}
 
 const localStorageBackend = {
   loadBoard(): Board | null {

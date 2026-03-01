@@ -27,6 +27,7 @@ export default function Header() {
   useEffect(() => {
     const stored = localStorage.getItem("parallel-dark-mode");
     const isDark = stored === null ? true : stored === "true";
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR hydration: localStorage is unavailable during server render
     setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
   }, []);
@@ -59,16 +60,10 @@ export default function Header() {
       try {
         const data = JSON.parse(reader.result as string);
         if (!validateBoard(data)) {
-          alert(
-            "Invalid file format. The JSON must contain a board with id and columns."
-          );
+          alert("Invalid file format. The JSON must contain a board with id and columns.");
           return;
         }
-        if (
-          !confirm(
-            "Importing will replace all current data. Continue?"
-          )
-        ) {
+        if (!confirm("Importing will replace all current data. Continue?")) {
           return;
         }
         importBoard(data);

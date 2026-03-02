@@ -9,6 +9,7 @@ export type Task = {
   createdAt: number;
   startedAt?: number;
   completedAt?: number;
+  githubUrl?: string;
 };
 
 export type Column = {

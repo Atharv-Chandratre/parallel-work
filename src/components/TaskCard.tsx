@@ -5,6 +5,7 @@ import { Task, STATUS_CONFIG } from "@/lib/types";
 import { useBoardStore } from "@/store/boardStore";
 import StatusBadge from "./StatusBadge";
 import TaskDetail from "./TaskDetail";
+import LinkIcon from "./LinkIcon";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -129,10 +130,7 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
                 className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors cursor-pointer"
                 title={task.githubUrl}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                </svg>
+                <LinkIcon url={task.githubUrl} size={14} />
               </a>
             )}
             <button

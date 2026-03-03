@@ -200,6 +200,44 @@ test.describe("Task management", () => {
     await taskSpan.click();
     await expect(linkInput).toHaveValue("https://example.com/relevant-doc");
   });
+
+  test("link icon appears on card for GitHub URL", async ({ page }) => {
+    await addTask(page, "GitHub Task");
+
+    const taskSpan = page
+      .locator('span[title="Double-click to rename"]')
+      .filter({ hasText: "GitHub Task" });
+    await taskSpan.click();
+
+    const linkInput = page.getByPlaceholder(/Paste link/);
+    await linkInput.fill("https://github.com/owner/repo");
+    await page.getByRole("heading", { name: "Test Project" }).first().click();
+
+    const taskCard = page.locator(".group").filter({ hasText: "GitHub Task" });
+    const link = taskCard.locator('a[href="https://github.com/owner/repo"]');
+    await expect(link).toBeVisible();
+  });
+
+  test("link icon appears on card for decision-systems URL", async ({ page }) => {
+    await addTask(page, "Experiment Task");
+
+    const taskSpan = page
+      .locator('span[title="Double-click to rename"]')
+      .filter({ hasText: "Experiment Task" });
+    await taskSpan.click();
+
+    const linkInput = page.getByPlaceholder(/Paste link/);
+    await linkInput.fill(
+      "https://ops.doordash.team/decision-systems/dynamic-values-v2/experiments/67b12aa0-6e5e-4985-be2b-cbda5ada8fa2"
+    );
+    await page.getByRole("heading", { name: "Test Project" }).first().click();
+
+    const taskCard = page.locator(".group").filter({ hasText: "Experiment Task" });
+    const link = taskCard.locator(
+      'a[href="https://ops.doordash.team/decision-systems/dynamic-values-v2/experiments/67b12aa0-6e5e-4985-be2b-cbda5ada8fa2"]'
+    );
+    await expect(link).toBeVisible();
+  });
 });
 
 test.describe("Done tasks section", () => {

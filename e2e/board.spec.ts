@@ -182,6 +182,24 @@ test.describe("Task management", () => {
     await taskSpan.click();
     await expect(page.getByPlaceholder(/What to tell the agent/)).toHaveValue("These are my notes");
   });
+
+  test("expand task detail and add link", async ({ page }) => {
+    await addTask(page, "Link Task");
+
+    const taskSpan = page
+      .locator('span[title="Double-click to rename"]')
+      .filter({ hasText: "Link Task" });
+    await taskSpan.click();
+
+    const linkInput = page.getByPlaceholder(/Paste link/);
+    await expect(linkInput).toBeVisible();
+    await linkInput.fill("https://example.com/relevant-doc");
+    await page.getByRole("heading", { name: "Test Project" }).first().click();
+
+    await taskSpan.click();
+    await taskSpan.click();
+    await expect(linkInput).toHaveValue("https://example.com/relevant-doc");
+  });
 });
 
 test.describe("Done tasks section", () => {

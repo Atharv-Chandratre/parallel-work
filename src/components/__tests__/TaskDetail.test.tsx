@@ -85,4 +85,27 @@ describe("TaskDetail", () => {
     const dateElements = screen.getAllByText(/Jan 1[57]/);
     expect(dateElements.length).toBeGreaterThanOrEqual(2);
   });
+
+  it("renders link input with current value when githubUrl is set", () => {
+    const taskWithLink: Task = {
+      ...baseTask,
+      githubUrl: "https://example.com/doc",
+    };
+    render(<TaskDetail task={taskWithLink} columnId="col-1" />);
+    const linkInput = screen.getByPlaceholderText(/Paste link/) as HTMLInputElement;
+    expect(linkInput.value).toBe("https://example.com/doc");
+  });
+
+  it("saves link on blur", async () => {
+    const user = userEvent.setup();
+    render(<TaskDetail task={baseTask} columnId="col-1" />);
+    const linkInput = screen.getByPlaceholderText(/Paste link/);
+
+    await user.type(linkInput, "https://jira.example.com/issue-123");
+    await user.click(document.body);
+
+    expect(useBoardStore.getState().board.columns[0].tasks[0].githubUrl).toBe(
+      "https://jira.example.com/issue-123"
+    );
+  });
 });

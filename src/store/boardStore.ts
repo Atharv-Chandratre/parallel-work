@@ -21,6 +21,7 @@ type BoardState = {
     updates: Partial<Pick<Task, "title" | "notes" | "status" | "githubUrl">>
   ) => void;
   deleteTask: (columnId: string, taskId: string) => void;
+  deleteDoneTasks: (columnId: string) => void;
   cycleTaskStatus: (columnId: string, taskId: string, direction?: number) => void;
   reorderTask: (columnId: string, fromIndex: number, toIndex: number) => void;
   moveTaskBetweenColumns: (
@@ -203,6 +204,23 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           return {
             ...col,
             tasks: col.tasks.filter((t) => t.id !== taskId).map((t, i) => ({ ...t, order: i })),
+          };
+        }),
+      };
+      persist(board);
+      return { board };
+    });
+  },
+
+  deleteDoneTasks: (columnId) => {
+    set((state) => {
+      const board = {
+        ...state.board,
+        columns: state.board.columns.map((col) => {
+          if (col.id !== columnId) return col;
+          return {
+            ...col,
+            tasks: col.tasks.filter((t) => t.status !== "done").map((t, i) => ({ ...t, order: i })),
           };
         }),
       };

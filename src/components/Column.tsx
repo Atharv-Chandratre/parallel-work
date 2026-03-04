@@ -8,6 +8,7 @@ import { Column as ColumnType } from "@/lib/types";
 import { useBoardStore } from "@/store/boardStore";
 import TaskCard from "./TaskCard";
 import AddTask from "./AddTask";
+import ConfirmModal from "./ConfirmModal";
 
 type ColumnProps = {
   column: ColumnType;
@@ -56,8 +57,10 @@ export default function Column({ column }: ColumnProps) {
   const [editTitle, setEditTitle] = useState(column.title);
   const [showDone, setShowDone] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"deleteColumn" | "clearDone" | null>(null);
   const renameColumn = useBoardStore((s) => s.renameColumn);
   const deleteColumn = useBoardStore((s) => s.deleteColumn);
+  const deleteDoneTasks = useBoardStore((s) => s.deleteDoneTasks);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -154,7 +157,7 @@ export default function Column({ column }: ColumnProps) {
           {showMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 top-6 z-20 w-36 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 py-1 shadow-xl">
+              <div className="absolute right-0 top-6 z-20 w-40 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 py-1 shadow-xl">
                 <button
                   onClick={() => {
                     setShowMenu(false);
@@ -167,13 +170,21 @@ export default function Column({ column }: ColumnProps) {
                 <button
                   onClick={() => {
                     setShowMenu(false);
-                    if (confirm(`Delete "${column.title}" and all its tasks?`)) {
-                      deleteColumn(column.id);
-                    }
+                    setConfirmAction("clearDone");
+                  }}
+                  disabled={doneTasks.length === 0}
+                  className="w-full px-3 py-1.5 text-left text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Clear Done Tasks
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    setConfirmAction("deleteColumn");
                   }}
                   className="w-full px-3 py-1.5 text-left text-xs text-red-500 dark:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer"
                 >
-                  Delete
+                  Delete Project
                 </button>
               </div>
             </>
@@ -225,6 +236,32 @@ export default function Column({ column }: ColumnProps) {
           </div>
         )}
       </div>
+
+      {confirmAction === "deleteColumn" && (
+        <ConfirmModal
+          title={`Delete "${column.title}"?`}
+          message="This will permanently delete the project and all its tasks."
+          confirmLabel="Delete"
+          onConfirm={() => {
+            setConfirmAction(null);
+            deleteColumn(column.id);
+          }}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
+
+      {confirmAction === "clearDone" && (
+        <ConfirmModal
+          title={`Clear done tasks?`}
+          message={`This will permanently delete ${doneTasks.length} completed task${doneTasks.length === 1 ? "" : "s"} from "${column.title}".`}
+          confirmLabel="Clear"
+          onConfirm={() => {
+            setConfirmAction(null);
+            deleteDoneTasks(column.id);
+          }}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
     </div>
   );
 }

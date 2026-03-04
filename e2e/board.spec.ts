@@ -20,9 +20,13 @@ async function createColumn(page: Page, name: string) {
 }
 
 async function addTask(page: Page, title: string) {
-  await page.getByText("+ Add task").click();
-  await page.getByPlaceholder("Task title...").fill(title);
-  await page.getByPlaceholder("Task title...").press("Enter");
+  const input = page.getByPlaceholder("Task title...");
+  // If the add-task form is already open, use it directly; otherwise click to open
+  if (!(await input.isVisible())) {
+    await page.getByText("+ Add task").click();
+  }
+  await input.fill(title);
+  await input.press("Enter");
   await expect(page.locator(`span:text-is("${title}")`)).toBeVisible();
 }
 
@@ -73,18 +77,43 @@ test.describe("Column management", () => {
     await expect(page.getByRole("heading", { name: "New Name" })).toBeVisible();
   });
 
-  test("delete a column via menu", async ({ page }) => {
+  test("delete a column via menu with confirmation modal", async ({ page }) => {
     await createColumn(page, "To Delete");
 
     // Click the 3-dot column menu button
     const columnHeader = page.locator('[style*="border-top"]');
     await columnHeader.locator("button").first().click();
 
-    // Accept the confirmation dialog
-    page.once("dialog", (dialog) => dialog.accept());
-    await page.locator("div.absolute button").filter({ hasText: "Delete" }).click();
+    // Click Delete Project in menu
+    await page.locator("div.absolute button").filter({ hasText: "Delete Project" }).click();
+
+    // Modal should appear
+    await expect(page.getByText('Delete "To Delete"?')).toBeVisible();
+    await expect(
+      page.getByText("This will permanently delete the project and all its tasks.")
+    ).toBeVisible();
+
+    // Confirm deletion via the modal's Delete button
+    await page.getByTestId("confirm-modal-backdrop").getByRole("button", { name: "Delete" }).click();
 
     await expect(page.getByText("No projects yet")).toBeVisible();
+  });
+
+  test("cancel delete column via modal", async ({ page }) => {
+    await createColumn(page, "Keep Me");
+
+    const columnHeader = page.locator('[style*="border-top"]');
+    await columnHeader.locator("button").first().click();
+    await page.locator("div.absolute button").filter({ hasText: "Delete Project" }).click();
+
+    // Modal should appear
+    await expect(page.getByText('Delete "Keep Me"?')).toBeVisible();
+
+    // Cancel
+    await page.getByRole("button", { name: "Cancel" }).click();
+
+    // Column should still exist
+    await expect(page.getByRole("heading", { name: "Keep Me" })).toBeVisible();
   });
 });
 
@@ -279,5 +308,57 @@ test.describe("Done tasks section", () => {
     await doneBtn.dispatchEvent("click");
     await page.waitForTimeout(200);
     await expect(taskTitle).not.toBeVisible();
+  });
+
+  test("clear done tasks via menu with confirmation modal", async ({ page }) => {
+    await addTask(page, "Active Task");
+    await addTask(page, "Finished Task");
+    await cycleTaskToDone(page, "Finished Task");
+
+    // Open the column menu
+    const columnHeader = page.locator('[style*="border-top"]');
+    await columnHeader.locator("button").first().click();
+
+    // Click Clear Done Tasks
+    await page.locator("div.absolute button").filter({ hasText: "Clear Done Tasks" }).click();
+
+    // Modal should appear
+    await expect(page.getByText("Clear done tasks?")).toBeVisible();
+    await expect(
+      page.getByText(/This will permanently delete 1 completed task from/)
+    ).toBeVisible();
+
+    // Confirm
+    await page.getByRole("button", { name: "Clear" }).click();
+
+    // Done section should disappear, active task remains
+    await expect(page.locator("button").filter({ hasText: /Done \(\d+\)/ })).not.toBeVisible();
+    await expect(page.getByText("Active Task")).toBeVisible();
+  });
+
+  test("cancel clear done tasks keeps tasks intact", async ({ page }) => {
+    await addTask(page, "Done Task");
+    await cycleTaskToDone(page, "Done Task");
+
+    const columnHeader = page.locator('[style*="border-top"]');
+    await columnHeader.locator("button").first().click();
+    await page.locator("div.absolute button").filter({ hasText: "Clear Done Tasks" }).click();
+
+    // Cancel
+    await page.getByRole("button", { name: "Cancel" }).click();
+
+    // Done section should still be there
+    const doneBtn = page.locator("button").filter({ hasText: /Done \(\d+\)/ });
+    await expect(doneBtn).toBeVisible();
+  });
+
+  test("clear done tasks is disabled when no done tasks exist", async ({ page }) => {
+    await addTask(page, "Active Only");
+
+    const columnHeader = page.locator('[style*="border-top"]');
+    await columnHeader.locator("button").first().click();
+
+    const clearBtn = page.locator("div.absolute button").filter({ hasText: "Clear Done Tasks" });
+    await expect(clearBtn).toBeDisabled();
   });
 });

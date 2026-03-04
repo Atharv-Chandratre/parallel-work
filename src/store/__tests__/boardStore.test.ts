@@ -190,6 +190,31 @@ describe("boardStore", () => {
       expect(tasks[1].order).toBe(1);
     });
 
+    it("deleteDoneTasks removes only done tasks and re-indexes orders", () => {
+      getState().addTask(columnId, "Active");
+      getState().addTask(columnId, "Done One");
+      getState().addTask(columnId, "Done Two");
+      const doneOneId = getState().board.columns[0].tasks[1].id;
+      const doneTwoId = getState().board.columns[0].tasks[2].id;
+
+      getState().updateTask(columnId, doneOneId, { status: "done" });
+      getState().updateTask(columnId, doneTwoId, { status: "done" });
+
+      getState().deleteDoneTasks(columnId);
+      const tasks = getState().board.columns[0].tasks;
+      expect(tasks).toHaveLength(1);
+      expect(tasks[0].title).toBe("Active");
+      expect(tasks[0].order).toBe(0);
+    });
+
+    it("deleteDoneTasks does nothing when no done tasks exist", () => {
+      getState().addTask(columnId, "Active");
+      getState().deleteDoneTasks(columnId);
+      const tasks = getState().board.columns[0].tasks;
+      expect(tasks).toHaveLength(1);
+      expect(tasks[0].title).toBe("Active");
+    });
+
     it("cycleTaskStatus cycles forward: todo → queued → in-review → done", () => {
       getState().addTask(columnId, "Task");
       const taskId = getState().board.columns[0].tasks[0].id;

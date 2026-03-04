@@ -94,7 +94,10 @@ test.describe("Column management", () => {
     ).toBeVisible();
 
     // Confirm deletion via the modal's Delete button
-    await page.getByTestId("confirm-modal-backdrop").getByRole("button", { name: "Delete" }).click();
+    await page
+      .getByTestId("confirm-modal-backdrop")
+      .getByRole("button", { name: "Delete" })
+      .click();
 
     await expect(page.getByText("No projects yet")).toBeVisible();
   });
@@ -310,17 +313,13 @@ test.describe("Done tasks section", () => {
     await expect(taskTitle).not.toBeVisible();
   });
 
-  test("clear done tasks via menu with confirmation modal", async ({ page }) => {
+  test("clear done tasks via inline button with confirmation modal", async ({ page }) => {
     await addTask(page, "Active Task");
     await addTask(page, "Finished Task");
     await cycleTaskToDone(page, "Finished Task");
 
-    // Open the column menu
-    const columnHeader = page.locator('[style*="border-top"]');
-    await columnHeader.locator("button").first().click();
-
-    // Click Clear Done Tasks
-    await page.locator("div.absolute button").filter({ hasText: "Clear Done Tasks" }).click();
+    // Click the Clear button next to the Done toggle (use dispatchEvent for DnD context)
+    await page.getByTitle("Clear done tasks").dispatchEvent("click");
 
     // Modal should appear
     await expect(page.getByText("Clear done tasks?")).toBeVisible();
@@ -328,8 +327,8 @@ test.describe("Done tasks section", () => {
       page.getByText(/This will permanently delete 1 completed task from/)
     ).toBeVisible();
 
-    // Confirm
-    await page.getByRole("button", { name: "Clear" }).click();
+    // Confirm via the modal's Clear button
+    await page.getByTestId("confirm-modal-backdrop").getByRole("button", { name: "Clear" }).click();
 
     // Done section should disappear, active task remains
     await expect(page.locator("button").filter({ hasText: /Done \(\d+\)/ })).not.toBeVisible();
@@ -340,9 +339,8 @@ test.describe("Done tasks section", () => {
     await addTask(page, "Done Task");
     await cycleTaskToDone(page, "Done Task");
 
-    const columnHeader = page.locator('[style*="border-top"]');
-    await columnHeader.locator("button").first().click();
-    await page.locator("div.absolute button").filter({ hasText: "Clear Done Tasks" }).click();
+    // Click the Clear button next to the Done toggle (use dispatchEvent for DnD context)
+    await page.getByTitle("Clear done tasks").dispatchEvent("click");
 
     // Cancel
     await page.getByRole("button", { name: "Cancel" }).click();
@@ -350,15 +348,5 @@ test.describe("Done tasks section", () => {
     // Done section should still be there
     const doneBtn = page.locator("button").filter({ hasText: /Done \(\d+\)/ });
     await expect(doneBtn).toBeVisible();
-  });
-
-  test("clear done tasks is disabled when no done tasks exist", async ({ page }) => {
-    await addTask(page, "Active Only");
-
-    const columnHeader = page.locator('[style*="border-top"]');
-    await columnHeader.locator("button").first().click();
-
-    const clearBtn = page.locator("div.absolute button").filter({ hasText: "Clear Done Tasks" });
-    await expect(clearBtn).toBeDisabled();
   });
 });

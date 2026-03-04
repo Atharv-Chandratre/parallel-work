@@ -157,7 +157,7 @@ export default function Column({ column }: ColumnProps) {
           {showMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 top-6 z-20 w-40 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 py-1 shadow-xl">
+              <div className="absolute right-0 top-6 z-20 w-36 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 py-1 shadow-xl">
                 <button
                   onClick={() => {
                     setShowMenu(false);
@@ -166,16 +166,6 @@ export default function Column({ column }: ColumnProps) {
                   className="w-full px-3 py-1.5 text-left text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer"
                 >
                   Rename
-                </button>
-                <button
-                  onClick={() => {
-                    setShowMenu(false);
-                    setConfirmAction("clearDone");
-                  }}
-                  disabled={doneTasks.length === 0}
-                  className="w-full px-3 py-1.5 text-left text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Clear Done Tasks
                 </button>
                 <button
                   onClick={() => {
@@ -209,23 +199,32 @@ export default function Column({ column }: ColumnProps) {
 
         {doneTasks.length > 0 && (
           <div className="mt-3">
-            <button
-              onClick={() => setShowDone(!showDone)}
-              className="flex w-full items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer py-1"
-            >
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className={`transition-transform ${showDone ? "rotate-90" : ""}`}
+            <div className="flex items-center py-1">
+              <button
+                onClick={() => setShowDone(!showDone)}
+                className="flex flex-1 items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
               >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-              Done ({doneTasks.length})
-            </button>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className={`transition-transform ${showDone ? "rotate-90" : ""}`}
+                >
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+                Done ({doneTasks.length})
+              </button>
+              <button
+                onClick={() => setConfirmAction("clearDone")}
+                title="Clear done tasks"
+                className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:text-red-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+              >
+                Clear
+              </button>
+            </div>
             {showDone && (
               <div className="mt-1 flex flex-col gap-1.5">
                 {doneTasks.map((task) => (

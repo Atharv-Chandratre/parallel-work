@@ -250,6 +250,23 @@ test.describe("Task management", () => {
     await expect(link).toBeVisible();
   });
 
+  test("link icon appears on card for Jira URL", async ({ page }) => {
+    await addTask(page, "Jira Task");
+
+    const taskSpan = page
+      .locator('span[title="Double-click to rename"]')
+      .filter({ hasText: "Jira Task" });
+    await taskSpan.click();
+
+    const linkInput = page.getByPlaceholder(/Paste link/);
+    await linkInput.fill("https://mycompany.atlassian.net/browse/PROJ-123");
+    await page.getByRole("heading", { name: "Test Project" }).first().click();
+
+    const taskCard = page.locator(".group").filter({ hasText: "Jira Task" });
+    const link = taskCard.locator('a[href="https://mycompany.atlassian.net/browse/PROJ-123"]');
+    await expect(link).toBeVisible();
+  });
+
   test("link icon appears on card for decision-systems URL", async ({ page }) => {
     await addTask(page, "Experiment Task");
 

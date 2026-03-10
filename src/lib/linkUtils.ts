@@ -1,4 +1,4 @@
-export type LinkType = "github" | "slack" | "decision-systems" | "generic";
+export type LinkType = "github" | "slack" | "decision-systems" | "jira" | "generic";
 
 /**
  * Detects the type of link from a URL for displaying the appropriate icon.
@@ -18,6 +18,9 @@ export function getLinkType(url: string): LinkType {
     }
     if (host.includes("ops.doordash.team") && lower.includes("decision-systems")) {
       return "decision-systems";
+    }
+    if (host.includes("atlassian.net") || host.endsWith(".atlassian.net")) {
+      return "jira";
     }
   } catch {
     // Invalid URL, treat as generic

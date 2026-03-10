@@ -22,6 +22,13 @@ describe("LinkIcon", () => {
     expect(container.querySelector("svg")).toBeInTheDocument();
   });
 
+  it("renders for jira URL", () => {
+    const { container } = render(
+      <LinkIcon url="https://mycompany.atlassian.net/browse/PROJ-123" />
+    );
+    expect(container.querySelector("svg")).toBeInTheDocument();
+  });
+
   it("renders for generic URL", () => {
     const { container } = render(<LinkIcon url="https://example.com/doc" />);
     expect(container.querySelector("svg")).toBeInTheDocument();

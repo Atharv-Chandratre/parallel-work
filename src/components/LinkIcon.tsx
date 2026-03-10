@@ -24,6 +24,14 @@ function SlackIcon({ size = 14, className }: { size?: number; className?: string
   );
 }
 
+function JiraIcon({ size = 14, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M11.53 2c0 2.4 1.97 4.35 4.35 4.35H17.7v1.8c0 2.4 1.95 4.34 4.35 4.35V2.84a.84.84 0 0 0-.84-.84zM6.77 6.8a4.362 4.362 0 0 0 4.34 4.34h1.82v1.82a4.362 4.362 0 0 0 4.34 4.34V7.63a.84.84 0 0 0-.83-.83zM2 11.6c0 2.4 1.95 4.34 4.35 4.34h1.82v1.82C8.17 20.16 10.12 22.1 12.52 22.1v-9.66a.84.84 0 0 0-.84-.84z" />
+    </svg>
+  );
+}
+
 function DecisionSystemsIcon({ size = 14, className }: { size?: number; className?: string }) {
   return (
     <svg
@@ -68,6 +76,7 @@ const ICON_MAP: Record<LinkType, React.ComponentType<{ size?: number; className?
   github: GithubIcon,
   slack: SlackIcon,
   "decision-systems": DecisionSystemsIcon,
+  jira: JiraIcon,
   generic: GenericLinkIcon,
 };
 

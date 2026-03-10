@@ -24,6 +24,14 @@ describe("getLinkType", () => {
     );
   });
 
+  it("returns jira for atlassian.net URLs", () => {
+    expect(getLinkType("https://mycompany.atlassian.net/browse/PROJ-123")).toBe("jira");
+    expect(getLinkType("https://atlassian.net/browse/PROJ-123")).toBe("jira");
+    expect(getLinkType("https://mycompany.atlassian.net/jira/software/projects/PROJ/boards")).toBe(
+      "jira"
+    );
+  });
+
   it("returns generic for other URLs", () => {
     expect(getLinkType("https://example.com/page")).toBe("generic");
     expect(getLinkType("https://jira.example.com/issue-123")).toBe("generic");

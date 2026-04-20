@@ -29,14 +29,27 @@ function formatElapsed(startTs: number): string {
   return `${minutes}m`;
 }
 
+async function fetchLinkTitle(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(`/api/link-title?url=${encodeURIComponent(url)}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { ok?: boolean; title?: string };
+    return data.ok && data.title ? data.title : null;
+  } catch {
+    return null;
+  }
+}
+
 function LinkRow({
   initialUrl,
   onSave,
   onRemove,
+  onUseAsTitle,
 }: {
   initialUrl: string;
   onSave: (url: string) => void;
   onRemove: () => void;
+  onUseAsTitle: (url: string) => void;
 }) {
   const [value, setValue] = useState(initialUrl);
   useEffect(() => {
@@ -65,6 +78,25 @@ function LinkRow({
         }}
         className="flex-1 rounded-md bg-white dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none focus:border-blue-400 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 transition-all"
       />
+      <button
+        onClick={() => onUseAsTitle(value.trim())}
+        aria-label="Use link title as task title"
+        title="Fetch page title and use as task title"
+        disabled={!value.trim()}
+        className="rounded p-1 text-zinc-400 hover:text-blue-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+      >
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+        </svg>
+      </button>
       <button
         onClick={onRemove}
         aria-label="Remove link"
@@ -118,6 +150,19 @@ export default function TaskDetail({ task, columnId }: TaskDetailProps) {
     if (!trimmed) return;
     addTaskLink(columnId, task.id, trimmed);
     setNewLinkUrl("");
+    // Only auto-fill title if the task still has its default/empty title.
+    const isDefaultTitle = !task.title.trim() || task.title === "Untitled";
+    if (isDefaultTitle) {
+      void fetchLinkTitle(trimmed).then((title) => {
+        if (title) updateTask(columnId, task.id, { title });
+      });
+    }
+  };
+
+  const applyLinkTitle = async (url: string) => {
+    if (!url) return;
+    const title = await fetchLinkTitle(url);
+    if (title) updateTask(columnId, task.id, { title });
   };
 
   return (
@@ -148,6 +193,7 @@ export default function TaskDetail({ task, columnId }: TaskDetailProps) {
               initialUrl={link.url}
               onSave={(url) => updateTaskLink(columnId, task.id, link.id, url)}
               onRemove={() => removeTaskLink(columnId, task.id, link.id)}
+              onUseAsTitle={applyLinkTitle}
             />
           ))}
           <div className="flex items-center gap-1">

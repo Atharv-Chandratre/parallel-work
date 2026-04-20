@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { memo, useState, useRef, useEffect, useMemo } from "react";
 import { Task, STATUS_CONFIG } from "@/lib/types";
 import { useBoardStore } from "@/store/boardStore";
 import StatusBadge from "./StatusBadge";
@@ -14,7 +14,7 @@ type TaskCardProps = {
   columnId: string;
 };
 
-export default function TaskCard({ task, columnId }: TaskCardProps) {
+function TaskCard({ task, columnId }: TaskCardProps) {
   const [isRenaming, setIsRenaming] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -47,11 +47,14 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
 
   const statusColor = STATUS_CONFIG[task.status].color;
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    borderLeft: `3px solid ${statusColor}`,
-  };
+  const style = useMemo(
+    () => ({
+      transform: CSS.Transform.toString(transform),
+      transition,
+      borderLeft: `3px solid ${statusColor}`,
+    }),
+    [transform, transition, statusColor]
+  );
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (isRenaming) return;
@@ -206,3 +209,5 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
     </div>
   );
 }
+
+export default memo(TaskCard);

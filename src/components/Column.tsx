@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
@@ -78,18 +78,23 @@ export default function Column({ column }: ColumnProps) {
     data: { type: "column", columnId: column.id },
   });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const style = useMemo(
+    () => ({
+      transform: CSS.Transform.toString(transform),
+      transition,
+    }),
+    [transform, transition]
+  );
 
   useEffect(() => {
     if (isEditing) inputRef.current?.focus();
   }, [isEditing]);
 
-  const activeTasks = column.tasks.filter((t) => t.status !== "done");
-  const doneTasks = column.tasks.filter((t) => t.status === "done");
-  const taskIds = activeTasks.map((t) => t.id);
+  const { activeTasks, doneTasks, taskIds } = useMemo(() => {
+    const active = column.tasks.filter((t) => t.status !== "done");
+    const done = column.tasks.filter((t) => t.status === "done");
+    return { activeTasks: active, doneTasks: done, taskIds: active.map((t) => t.id) };
+  }, [column.tasks]);
 
   const saveTitle = () => {
     const trimmed = editTitle.trim();

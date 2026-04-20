@@ -206,11 +206,11 @@ test.describe("Task management", () => {
     const textarea = page.getByPlaceholder(/What to tell the agent/);
     await expect(textarea).toBeVisible();
     await textarea.fill("These are my notes");
-    // Click the column heading to blur
+    // Click the column heading — blurs input and (per outside-click behavior) collapses
     await page.getByRole("heading", { name: "Test Project" }).first().click();
+    await expect(page.getByPlaceholder(/What to tell the agent/)).toHaveCount(0);
 
-    // Collapse and re-expand
-    await taskSpan.click();
+    // Re-expand to confirm notes persisted
     await taskSpan.click();
     await expect(page.getByPlaceholder(/What to tell the agent/)).toHaveValue("These are my notes");
   });
@@ -227,10 +227,46 @@ test.describe("Task management", () => {
     await expect(linkInput).toBeVisible();
     await linkInput.fill("https://example.com/relevant-doc");
     await page.getByRole("heading", { name: "Test Project" }).first().click();
+    await expect(page.getByPlaceholder(/Paste link/)).toHaveCount(0);
 
     await taskSpan.click();
-    await taskSpan.click();
     await expect(linkInput).toHaveValue("https://example.com/relevant-doc");
+  });
+
+  test("only one task can be expanded at a time", async ({ page }) => {
+    await addTask(page, "Task A");
+    await addTask(page, "Task B");
+
+    const spanA = page
+      .locator('span[title="Double-click to rename"]')
+      .filter({ hasText: "Task A" });
+    const spanB = page
+      .locator('span[title="Double-click to rename"]')
+      .filter({ hasText: "Task B" });
+    const cardA = page.locator(".group").filter({ hasText: "Task A" });
+    const cardB = page.locator(".group").filter({ hasText: "Task B" });
+
+    await spanA.click();
+    await expect(cardA.getByPlaceholder(/What to tell the agent/)).toBeVisible();
+
+    await spanB.click();
+    await expect(cardB.getByPlaceholder(/What to tell the agent/)).toBeVisible();
+    await expect(cardA.getByPlaceholder(/What to tell the agent/)).toHaveCount(0);
+  });
+
+  test("clicking outside an expanded task collapses it", async ({ page }) => {
+    await addTask(page, "Outside Click Task");
+
+    const taskSpan = page
+      .locator('span[title="Double-click to rename"]')
+      .filter({ hasText: "Outside Click Task" });
+    await taskSpan.click();
+    await expect(page.getByPlaceholder(/What to tell the agent/)).toBeVisible();
+
+    // Click on column heading — empty area outside any task card
+    await page.getByRole("heading", { name: "Test Project" }).first().click();
+
+    await expect(page.getByPlaceholder(/What to tell the agent/)).toHaveCount(0);
   });
 
   test("link icon appears on card for GitHub URL", async ({ page }) => {

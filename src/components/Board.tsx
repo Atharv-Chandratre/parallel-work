@@ -29,6 +29,9 @@ export default function Board() {
     const handlePointerDown = (e: PointerEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target?.closest("[data-task-card]")) {
+        // Blur any focused input inside the detail so pending changes are saved
+        // via onBlur handlers before the detail unmounts.
+        (document.activeElement as HTMLElement | null)?.blur?.();
         setExpandedTaskId(null);
       }
     };

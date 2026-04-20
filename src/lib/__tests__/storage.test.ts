@@ -110,6 +110,44 @@ describe("storage", () => {
     expect(localStorage.getItem("parallel-boards")).toBe(JSON.stringify(mockCollection));
   });
 
+  it("saveBoards silently drops to localStorage-only on 503 STORAGE_READONLY", async () => {
+    // First: loadBoards marks apiAvailable = true.
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockCollection),
+    });
+    const { storage } = await import("@/lib/storage");
+    await storage.loadBoards();
+
+    // Now the first PUT gets the Vercel-read-only signal.
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      json: () => Promise.resolve({ code: "STORAGE_READONLY" }),
+    } as Response);
+    const first = await storage.saveBoards(mockCollection);
+    expect(first.ok).toBe(true); // no error toast
+    expect(first.apiError).toBeUndefined();
+
+    // Subsequent saves should skip the network entirely.
+    const callCountBefore = vi.mocked(fetch).mock.calls.length;
+    const second = await storage.saveBoards(mockCollection);
+    expect(second.ok).toBe(true);
+    expect(vi.mocked(fetch).mock.calls.length).toBe(callCountBefore);
+  });
+
+  it("loadBoards treats 503 as API-unavailable without throwing", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: () => Promise.resolve({ code: "STORAGE_READONLY" }),
+    });
+    localStorage.setItem("parallel-boards", JSON.stringify(mockCollection));
+    const { storage } = await import("@/lib/storage");
+    const result = await storage.loadBoards();
+    expect(result).toEqual(mockCollection);
+  });
+
   it("saveBoards surfaces the server's detail message on a 500 response", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,

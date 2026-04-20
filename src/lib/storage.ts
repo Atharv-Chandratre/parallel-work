@@ -44,6 +44,12 @@ export const storage = {
         if (data) return data as BoardsCollection;
         return readLocalCollection();
       }
+      // 503 + STORAGE_READONLY means the server can't persist (e.g. Vercel);
+      // latch apiAvailable=false so we never bother it with PUTs.
+      if (res.status === 503) {
+        apiAvailable = false;
+        return readLocalCollection();
+      }
     } catch {
       // API not available
     }
@@ -62,6 +68,22 @@ export const storage = {
           body: JSON.stringify(collection),
         });
         if (!res.ok) {
+          // Server explicitly told us it has no writable storage. Flip the
+          // module flag so subsequent saves don't even try the network;
+          // localStorage already has the data, so this is not an error.
+          if (res.status === 503) {
+            let code: string | undefined;
+            try {
+              const body = (await res.json()) as { code?: string };
+              code = body?.code;
+            } catch {
+              // ignore
+            }
+            if (code === "STORAGE_READONLY") {
+              apiAvailable = false;
+              return { ok: true };
+            }
+          }
           // Best-effort: pull the server's error detail so the user sees a useful toast.
           let detail = `HTTP ${res.status}`;
           try {

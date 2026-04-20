@@ -46,6 +46,11 @@ next-env.d.ts
 # playwright-mcp artifacts
 .playwright-mcp
 
+# playwright test artifacts
+/playwright-report
+/test-results
+/.superset
+
 # Auto Claude data directory
 .auto-claude/
 

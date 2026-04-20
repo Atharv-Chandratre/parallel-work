@@ -8,10 +8,13 @@ const mockBoard: Board = {
 
 describe("storage", () => {
   const originalWindow = globalThis.window;
+  const originalGetItem = Storage.prototype.getItem;
+  const originalSetItem = Storage.prototype.setItem;
 
   beforeEach(() => {
     vi.resetModules();
     vi.restoreAllMocks();
+    localStorage.clear();
   });
 
   afterEach(() => {
@@ -23,6 +26,10 @@ describe("storage", () => {
         configurable: true,
       });
     }
+    // Restore any monkey-patched Storage prototype methods so other test
+    // files don't inherit broken localStorage behavior.
+    Storage.prototype.getItem = originalGetItem;
+    Storage.prototype.setItem = originalSetItem;
   });
 
   it("loadBoard returns null on server (window undefined)", async () => {
@@ -55,7 +62,7 @@ describe("storage", () => {
 
   it("loadBoard falls back to localStorage when API fails", async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
-    Storage.prototype.getItem = vi.fn().mockReturnValue(JSON.stringify(mockBoard));
+    localStorage.setItem("parallel-board", JSON.stringify(mockBoard));
 
     const { storage } = await import("@/lib/storage");
     const result = await storage.loadBoard();
@@ -67,7 +74,7 @@ describe("storage", () => {
       ok: true,
       json: () => Promise.resolve(null),
     });
-    Storage.prototype.getItem = vi.fn().mockReturnValue(JSON.stringify(mockBoard));
+    localStorage.setItem("parallel-board", JSON.stringify(mockBoard));
 
     const { storage } = await import("@/lib/storage");
     const result = await storage.loadBoard();
@@ -80,7 +87,6 @@ describe("storage", () => {
       ok: true,
       json: () => Promise.resolve(mockBoard),
     });
-    Storage.prototype.setItem = vi.fn();
 
     const { storage } = await import("@/lib/storage");
     await storage.loadBoard();
@@ -91,17 +97,32 @@ describe("storage", () => {
       json: () => Promise.resolve({ ok: true }),
     } as Response);
 
-    await storage.saveBoard(mockBoard);
-    expect(Storage.prototype.setItem).toHaveBeenCalledWith(
-      "parallel-board",
-      JSON.stringify(mockBoard)
-    );
+    const result = await storage.saveBoard(mockBoard);
+    expect(result.ok).toBe(true);
+    expect(localStorage.getItem("parallel-board")).toBe(JSON.stringify(mockBoard));
     expect(fetch).toHaveBeenCalledWith(
       "/api/board",
       expect.objectContaining({
         method: "PUT",
       })
     );
+  });
+
+  it("saveBoard returns ok=false when API write fails", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockBoard),
+    });
+
+    const { storage } = await import("@/lib/storage");
+    await storage.loadBoard();
+
+    vi.mocked(fetch).mockRejectedValue(new Error("boom"));
+    const result = await storage.saveBoard(mockBoard);
+    expect(result.ok).toBe(false);
+    expect(result.apiError).toContain("boom");
+    // localStorage fallback still persisted
+    expect(localStorage.getItem("parallel-board")).toBe(JSON.stringify(mockBoard));
   });
 
   it("saveBoard no-ops on server", async () => {

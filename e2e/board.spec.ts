@@ -254,6 +254,20 @@ test.describe("Task management", () => {
     await expect(cardA.getByPlaceholder(/What to tell the agent/)).toHaveCount(0);
   });
 
+  test("header search filters tasks across columns", async ({ page }) => {
+    await addTask(page, "Buy coffee");
+    await addTask(page, "Write report");
+
+    const search = page.getByRole("searchbox", { name: /Search tasks/i });
+    await search.fill("coffee");
+
+    await expect(page.getByText("Buy coffee")).toBeVisible();
+    await expect(page.getByText("Write report")).not.toBeVisible();
+
+    await search.fill("");
+    await expect(page.getByText("Write report")).toBeVisible();
+  });
+
   test("clicking outside an expanded task collapses it", async ({ page }) => {
     await addTask(page, "Outside Click Task");
 

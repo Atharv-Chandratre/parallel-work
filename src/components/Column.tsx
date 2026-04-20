@@ -6,6 +6,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
 import { Column as ColumnType, STATUS_CONFIG, TaskStatus } from "@/lib/types";
 import { useBoardStore } from "@/store/boardStore";
+import { useFilterStore, taskMatchesFilter } from "@/store/filterStore";
 import TaskCard from "./TaskCard";
 import AddTask from "./AddTask";
 import ConfirmModal from "./ConfirmModal";
@@ -90,11 +91,17 @@ export default function Column({ column }: ColumnProps) {
     if (isEditing) inputRef.current?.focus();
   }, [isEditing]);
 
+  const searchQuery = useFilterStore((s) => s.searchQuery);
+  const statusFilters = useFilterStore((s) => s.statusFilters);
+  const linkTypeFilters = useFilterStore((s) => s.linkTypeFilters);
+
   const { activeTasks, doneTasks, taskIds } = useMemo(() => {
-    const active = column.tasks.filter((t) => t.status !== "done");
-    const done = column.tasks.filter((t) => t.status === "done");
+    const filter = { searchQuery, statusFilters, linkTypeFilters };
+    const visible = column.tasks.filter((t) => taskMatchesFilter(t, filter));
+    const active = visible.filter((t) => t.status !== "done");
+    const done = visible.filter((t) => t.status === "done");
     return { activeTasks: active, doneTasks: done, taskIds: active.map((t) => t.id) };
-  }, [column.tasks]);
+  }, [column.tasks, searchQuery, statusFilters, linkTypeFilters]);
 
   const saveTitle = () => {
     const trimmed = editTitle.trim();

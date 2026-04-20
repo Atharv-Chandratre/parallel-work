@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useBoardStore } from "@/store/boardStore";
-import { Board } from "@/lib/types";
+import { useFilterStore, isFilterActive } from "@/store/filterStore";
+import { Board, STATUS_CONFIG, TaskStatus } from "@/lib/types";
+import type { LinkType } from "@/lib/linkUtils";
 
 function validateBoard(data: unknown): data is Board {
   if (!data || typeof data !== "object") return false;
@@ -81,6 +83,23 @@ export default function Header() {
   const inReview = allTasks.filter((t) => t.status === "in-review").length;
   const todo = allTasks.filter((t) => t.status === "todo").length;
 
+  const searchQuery = useFilterStore((s) => s.searchQuery);
+  const setSearchQuery = useFilterStore((s) => s.setSearchQuery);
+  const statusFilters = useFilterStore((s) => s.statusFilters);
+  const toggleStatusFilter = useFilterStore((s) => s.toggleStatusFilter);
+  const linkTypeFilters = useFilterStore((s) => s.linkTypeFilters);
+  const toggleLinkTypeFilter = useFilterStore((s) => s.toggleLinkTypeFilter);
+  const clearFilters = useFilterStore((s) => s.clearFilters);
+  const filterActive = useFilterStore((s) => isFilterActive(s));
+
+  const STATUS_CHIPS: TaskStatus[] = ["todo", "queued", "in-review", "done"];
+  const LINK_CHIPS: { kind: LinkType; label: string }[] = [
+    { kind: "github", label: "GitHub" },
+    { kind: "jira", label: "Jira" },
+    { kind: "slack", label: "Slack" },
+    { kind: "decision-systems", label: "DV" },
+  ];
+
   const btnClass =
     "rounded-lg p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer";
 
@@ -117,6 +136,85 @@ export default function Header() {
             </span>
           )}
         </div>
+      </div>
+
+      <div className="hidden md:flex flex-1 items-center justify-center gap-2 px-4">
+        <div className="relative w-full max-w-md">
+          <svg
+            className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search tasks..."
+            aria-label="Search tasks"
+            className="w-full rounded-lg border border-[var(--color-card-border)] bg-[var(--color-card-bg)] py-1 pl-7 pr-2 text-xs text-zinc-700 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all"
+          />
+        </div>
+        <div className="flex items-center gap-1" role="group" aria-label="Status filters">
+          {STATUS_CHIPS.map((status) => {
+            const active = statusFilters.includes(status);
+            const cfg = STATUS_CONFIG[status];
+            return (
+              <button
+                key={status}
+                onClick={() => toggleStatusFilter(status)}
+                aria-pressed={active}
+                className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                  active
+                    ? "text-white"
+                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                }`}
+                style={active ? { backgroundColor: cfg.color } : undefined}
+              >
+                {cfg.label}
+              </button>
+            );
+          })}
+        </div>
+        <div
+          className="hidden lg:flex items-center gap-1"
+          role="group"
+          aria-label="Link type filters"
+        >
+          {LINK_CHIPS.map(({ kind, label }) => {
+            const active = linkTypeFilters.includes(kind);
+            return (
+              <button
+                key={kind}
+                onClick={() => toggleLinkTypeFilter(kind)}
+                aria-pressed={active}
+                className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                  active
+                    ? "bg-blue-500 text-white"
+                    : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        {filterActive && (
+          <button
+            onClick={clearFilters}
+            aria-label="Clear all filters"
+            className="rounded-full px-2 py-0.5 text-[10px] font-medium text-zinc-500 hover:text-red-400 transition-colors cursor-pointer"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-1">

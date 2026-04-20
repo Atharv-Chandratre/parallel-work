@@ -1,9 +1,14 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import type { Board } from "@/lib/types";
+import type { Board, BoardsCollection } from "@/lib/types";
 
 const mockBoard: Board = {
   id: "test-board",
+  name: "Test",
   columns: [{ id: "c1", title: "Col 1", color: "#000", order: 0, tasks: [] }],
+};
+const mockCollection: BoardsCollection = {
+  activeBoardId: "test-board",
+  boards: { "test-board": mockBoard },
 };
 
 describe("storage", () => {
@@ -18,7 +23,6 @@ describe("storage", () => {
   });
 
   afterEach(() => {
-    // Restore window if it was deleted
     if (!globalThis.window && originalWindow) {
       Object.defineProperty(globalThis, "window", {
         value: originalWindow,
@@ -26,21 +30,17 @@ describe("storage", () => {
         configurable: true,
       });
     }
-    // Restore any monkey-patched Storage prototype methods so other test
-    // files don't inherit broken localStorage behavior.
     Storage.prototype.getItem = originalGetItem;
     Storage.prototype.setItem = originalSetItem;
   });
 
-  it("loadBoard returns null on server (window undefined)", async () => {
+  it("loadBoards returns null on server (window undefined)", async () => {
     const savedWindow = globalThis.window;
     // @ts-expect-error - simulating server environment
     delete globalThis.window;
-
     const { storage } = await import("@/lib/storage");
-    const result = await storage.loadBoard();
+    const result = await storage.loadBoards();
     expect(result).toBeNull();
-
     Object.defineProperty(globalThis, "window", {
       value: savedWindow,
       writable: true,
@@ -48,92 +48,74 @@ describe("storage", () => {
     });
   });
 
-  it("loadBoard fetches from API and returns data", async () => {
+  it("loadBoards fetches from API and returns collection", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve(mockBoard),
+      json: () => Promise.resolve(mockCollection),
     });
-
     const { storage } = await import("@/lib/storage");
-    const result = await storage.loadBoard();
-    expect(result).toEqual(mockBoard);
-    expect(fetch).toHaveBeenCalledWith("/api/board");
+    const result = await storage.loadBoards();
+    expect(result).toEqual(mockCollection);
+    expect(fetch).toHaveBeenCalledWith("/api/boards");
   });
 
-  it("loadBoard falls back to localStorage when API fails", async () => {
+  it("loadBoards falls back to localStorage when API fails", async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
-    localStorage.setItem("parallel-board", JSON.stringify(mockBoard));
-
+    localStorage.setItem("parallel-boards", JSON.stringify(mockCollection));
     const { storage } = await import("@/lib/storage");
-    const result = await storage.loadBoard();
-    expect(result).toEqual(mockBoard);
+    const result = await storage.loadBoards();
+    expect(result).toEqual(mockCollection);
   });
 
-  it("loadBoard falls back to localStorage when API returns null data", async () => {
+  it("loadBoards migrates legacy parallel-board key when present", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(null),
     });
     localStorage.setItem("parallel-board", JSON.stringify(mockBoard));
-
     const { storage } = await import("@/lib/storage");
-    const result = await storage.loadBoard();
-    expect(result).toEqual(mockBoard);
+    const result = await storage.loadBoards();
+    expect(result?.activeBoardId).toBe("test-board");
+    expect(result?.boards["test-board"].name).toBe("Test");
   });
 
-  it("saveBoard saves to localStorage and API when available", async () => {
-    // First load to set apiAvailable = true
+  it("saveBoards writes to localStorage and API", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve(mockBoard),
+      json: () => Promise.resolve(mockCollection),
     });
-
     const { storage } = await import("@/lib/storage");
-    await storage.loadBoard();
-
-    // Now save
+    await storage.loadBoards();
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ ok: true }),
     } as Response);
-
-    const result = await storage.saveBoard(mockBoard);
+    const result = await storage.saveBoards(mockCollection);
     expect(result.ok).toBe(true);
-    expect(localStorage.getItem("parallel-board")).toBe(JSON.stringify(mockBoard));
-    expect(fetch).toHaveBeenCalledWith(
-      "/api/board",
-      expect.objectContaining({
-        method: "PUT",
-      })
-    );
+    expect(localStorage.getItem("parallel-boards")).toBe(JSON.stringify(mockCollection));
+    expect(fetch).toHaveBeenCalledWith("/api/boards", expect.objectContaining({ method: "PUT" }));
   });
 
-  it("saveBoard returns ok=false when API write fails", async () => {
+  it("saveBoards returns ok=false when API write fails", async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve(mockBoard),
+      json: () => Promise.resolve(mockCollection),
     });
-
     const { storage } = await import("@/lib/storage");
-    await storage.loadBoard();
-
+    await storage.loadBoards();
     vi.mocked(fetch).mockRejectedValue(new Error("boom"));
-    const result = await storage.saveBoard(mockBoard);
+    const result = await storage.saveBoards(mockCollection);
     expect(result.ok).toBe(false);
     expect(result.apiError).toContain("boom");
-    // localStorage fallback still persisted
-    expect(localStorage.getItem("parallel-board")).toBe(JSON.stringify(mockBoard));
+    expect(localStorage.getItem("parallel-boards")).toBe(JSON.stringify(mockCollection));
   });
 
-  it("saveBoard no-ops on server", async () => {
+  it("saveBoards no-ops on server", async () => {
     const savedWindow = globalThis.window;
     // @ts-expect-error - simulating server environment
     delete globalThis.window;
-
     const { storage } = await import("@/lib/storage");
-    await storage.saveBoard(mockBoard);
-    // Should not throw, just return
-
+    await storage.saveBoards(mockCollection);
     Object.defineProperty(globalThis, "window", {
       value: savedWindow,
       writable: true,

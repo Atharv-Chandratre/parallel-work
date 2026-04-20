@@ -4,12 +4,12 @@ import Board from "@/components/Board";
 import { useBoardStore } from "@/store/boardStore";
 
 vi.mock("@/lib/storage", () => ({
+  STORAGE_KEY: "parallel-boards",
   storage: {
-    loadBoard: vi.fn().mockResolvedValue(null),
-    saveBoard: vi.fn().mockResolvedValue({ ok: true }),
-    saveBoardSync: vi.fn(),
+    loadBoards: vi.fn().mockResolvedValue(null),
+    saveBoards: vi.fn().mockResolvedValue({ ok: true }),
+    saveBoardsSync: vi.fn(),
   },
-  STORAGE_KEY: "parallel-board",
 }));
 
 describe("Board", () => {

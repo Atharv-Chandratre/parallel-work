@@ -3,9 +3,11 @@ import { useBoardStore, _resetHistoryForTests } from "@/store/boardStore";
 import { Board, COLUMN_COLORS, Task } from "@/lib/types";
 
 vi.mock("@/lib/storage", () => ({
+  STORAGE_KEY: "parallel-boards",
   storage: {
-    loadBoard: vi.fn().mockResolvedValue(null),
-    saveBoard: vi.fn().mockResolvedValue(undefined),
+    loadBoards: vi.fn().mockResolvedValue(null),
+    saveBoards: vi.fn().mockResolvedValue({ ok: true }),
+    saveBoardsSync: vi.fn(),
   },
 }));
 
@@ -325,7 +327,7 @@ describe("boardStore", () => {
       };
 
       getState().importBoard(newBoard);
-      expect(getState().board.id).toBe("imported-board");
+      // Import replaces the currently-active board in place, keeping its id.
       expect(getState().board.columns[0].title).toBe("Imported Column");
     });
 
@@ -343,7 +345,10 @@ describe("boardStore", () => {
           },
         ],
       };
-      vi.mocked(storage.loadBoard).mockResolvedValueOnce(mockBoard);
+      vi.mocked(storage.loadBoards).mockResolvedValueOnce({
+        activeBoardId: "saved-board",
+        boards: { "saved-board": mockBoard },
+      });
 
       await getState().initialize();
       expect(getState().initialized).toBe(true);
@@ -352,7 +357,7 @@ describe("boardStore", () => {
 
     it("initialize creates default board when storage returns null", async () => {
       const { storage } = await import("@/lib/storage");
-      vi.mocked(storage.loadBoard).mockResolvedValueOnce(null);
+      vi.mocked(storage.loadBoards).mockResolvedValueOnce(null);
 
       await getState().initialize();
       expect(getState().initialized).toBe(true);

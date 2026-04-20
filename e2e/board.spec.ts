@@ -5,8 +5,13 @@ async function clearBoard(page: Page) {
   await page.evaluate(() => {
     localStorage.clear();
   });
-  await page.request.put("/api/board", {
-    data: { id: "test-board", columns: [] },
+  await page.request.put("/api/boards", {
+    data: {
+      activeBoardId: "test-board",
+      boards: {
+        "test-board": { id: "test-board", name: "Test Board", columns: [] },
+      },
+    },
   });
   await page.reload();
   await page.waitForLoadState("networkidle");
@@ -252,6 +257,27 @@ test.describe("Task management", () => {
     await spanB.click();
     await expect(cardB.getByPlaceholder(/What to tell the agent/)).toBeVisible();
     await expect(cardA.getByPlaceholder(/What to tell the agent/)).toHaveCount(0);
+  });
+
+  test("create a second board via board picker and switch between them", async ({ page }) => {
+    await addTask(page, "Task in first board");
+
+    // Open board picker (activeBoardId is "test-board" after clearBoard, name "Test Board")
+    await page.getByRole("button", { name: /Test Board/ }).click();
+
+    // Click New board. Prompt → accept with a name.
+    page.once("dialog", (d) => d.accept("Second Board"));
+    await page.getByRole("button", { name: "New board" }).click();
+
+    // The new board is now active; the task from the first board should be gone.
+    await expect(page.getByText("Task in first board")).not.toBeVisible();
+    // Picker label should show the new name.
+    await expect(page.getByRole("button", { name: /Second Board/ })).toBeVisible();
+
+    // Switch back to the original.
+    await page.getByRole("button", { name: /Second Board/ }).click();
+    await page.getByRole("button", { name: /^Test Board$/ }).click();
+    await expect(page.getByText("Task in first board")).toBeVisible();
   });
 
   test("command palette opens via Cmd+K and runs a command", async ({ page }) => {

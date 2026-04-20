@@ -31,7 +31,13 @@ export type Column = {
 
 export type Board = {
   id: string;
+  name?: string;
   columns: Column[];
+};
+
+export type BoardsCollection = {
+  activeBoardId: string;
+  boards: Record<string, Board>;
 };
 
 export const COLUMN_COLORS = [

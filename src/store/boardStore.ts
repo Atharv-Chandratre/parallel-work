@@ -1,11 +1,23 @@
 import { create } from "zustand";
 import { nanoid } from "nanoid";
-import { Board, Column, Task, TaskStatus, TaskLink, COLUMN_COLORS } from "@/lib/types";
+import {
+  Board,
+  BoardsCollection,
+  Column,
+  Task,
+  TaskStatus,
+  TaskLink,
+  COLUMN_COLORS,
+} from "@/lib/types";
 import { storage } from "@/lib/storage";
 import { useToastStore } from "./toastStore";
 
 type BoardState = {
+  /** Currently active board — a view of boards[activeBoardId]. */
   board: Board;
+  /** All boards, keyed by id. */
+  boards: Record<string, Board>;
+  activeBoardId: string;
   initialized: boolean;
   expandedTaskId: string | null;
   undoCount: number;
@@ -14,9 +26,14 @@ type BoardState = {
   initialize: () => Promise<void>;
   setExpandedTaskId: (taskId: string | null) => void;
   flushPendingSave: () => void;
-  hydrateFromStorage: (board: Board) => void;
+  hydrateFromStorage: (collection: BoardsCollection) => void;
   undo: () => void;
   redo: () => void;
+
+  switchBoard: (id: string) => void;
+  createBoard: (name: string) => string;
+  renameBoardById: (id: string, name: string) => void;
+  deleteBoardById: (id: string) => void;
 
   addColumn: (title: string) => void;
   renameColumn: (columnId: string, title: string) => void;
@@ -47,26 +64,40 @@ type BoardState = {
   importBoard: (board: Board) => void;
 };
 
-const createDefaultBoard = (): Board => ({
+const createDefaultBoard = (name = "My Board"): Board => ({
   id: nanoid(),
+  name,
   columns: [],
 });
 
+const createDefaultCollection = (): BoardsCollection => {
+  const board = createDefaultBoard();
+  return { activeBoardId: board.id, boards: { [board.id]: board } };
+};
+
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-let pendingBoard: Board | null = null;
+let dirty = false;
 let lastErrorToastAt = 0;
+
+const buildCollection = (): BoardsCollection => {
+  const s = useBoardStore.getState();
+  // Mirror the live active board into the boards map.
+  return {
+    activeBoardId: s.activeBoardId,
+    boards: { ...s.boards, [s.activeBoardId]: s.board },
+  };
+};
 
 const flushNow = async () => {
   if (debounceTimer) {
     clearTimeout(debounceTimer);
     debounceTimer = null;
   }
-  if (!pendingBoard) return;
-  const toSave = pendingBoard;
-  pendingBoard = null;
-  const result = await storage.saveBoard(toSave);
+  if (!dirty) return;
+  dirty = false;
+  const collection = buildCollection();
+  const result = await storage.saveBoards(collection);
   if (!result.ok) {
-    // Throttle error toasts so rapid edits don't spam.
     const now = Date.now();
     if (now - lastErrorToastAt > 5000) {
       lastErrorToastAt = now;
@@ -80,8 +111,12 @@ const flushNow = async () => {
   }
 };
 
-const persist = (board: Board) => {
-  pendingBoard = board;
+// Called from each mutation action. Board param retained for signature
+// compatibility but the full collection is derived from current state on
+// flush — the saved snapshot always reflects the latest state.
+const persist = (_board: Board) => {
+  void _board;
+  dirty = true;
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     debounceTimer = null;
@@ -128,18 +163,36 @@ export function _resetHistoryForTests() {
   redoStack.length = 0;
 }
 
+const defaultCollection = createDefaultCollection();
+
 export const useBoardStore = create<BoardState>((set, get) => ({
-  board: createDefaultBoard(),
+  board: defaultCollection.boards[defaultCollection.activeBoardId],
+  boards: defaultCollection.boards,
+  activeBoardId: defaultCollection.activeBoardId,
   initialized: false,
   expandedTaskId: null,
   undoCount: 0,
   redoCount: 0,
 
   initialize: async () => {
-    const saved = await storage.loadBoard();
-    const board = saved ? migrateBoard(saved) : createDefaultBoard();
+    const saved = await storage.loadBoards();
+    let collection: BoardsCollection;
+    if (saved && saved.boards && Object.keys(saved.boards).length > 0) {
+      collection = {
+        activeBoardId: saved.boards[saved.activeBoardId]
+          ? saved.activeBoardId
+          : Object.keys(saved.boards)[0],
+        boards: Object.fromEntries(
+          Object.entries(saved.boards).map(([id, b]) => [id, migrateBoard(b)])
+        ),
+      };
+    } else {
+      collection = createDefaultCollection();
+    }
     set({
-      board,
+      board: collection.boards[collection.activeBoardId],
+      boards: collection.boards,
+      activeBoardId: collection.activeBoardId,
       initialized: true,
     });
   },
@@ -151,16 +204,90 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       clearTimeout(debounceTimer);
       debounceTimer = null;
     }
-    if (pendingBoard) {
-      storage.saveBoardSync(pendingBoard);
+    if (dirty) {
+      storage.saveBoardsSync(buildCollection());
+      dirty = false;
     }
   },
 
-  hydrateFromStorage: (board: Board) => {
-    // Update state without triggering a persist write (prevents cross-tab loop).
+  hydrateFromStorage: (collection: BoardsCollection) => {
     suppressHistory = true;
-    set({ board: migrateBoard(board) });
+    const migrated: Record<string, Board> = Object.fromEntries(
+      Object.entries(collection.boards).map(([id, b]) => [id, migrateBoard(b)])
+    );
+    const activeId = migrated[collection.activeBoardId]
+      ? collection.activeBoardId
+      : Object.keys(migrated)[0];
+    set({
+      board: migrated[activeId],
+      boards: migrated,
+      activeBoardId: activeId,
+    });
     suppressHistory = false;
+  },
+
+  switchBoard: (id) => {
+    const state = get();
+    if (!state.boards[id] || id === state.activeBoardId) return;
+    // Persist any in-flight edits to the current board before switching.
+    if (dirty) {
+      storage.saveBoardsSync(buildCollection());
+      dirty = false;
+    }
+    // Snapshot current live board into boards map.
+    const updatedBoards = { ...state.boards, [state.activeBoardId]: state.board };
+    suppressHistory = true;
+    set({ boards: updatedBoards, activeBoardId: id, board: updatedBoards[id] });
+    suppressHistory = false;
+    persist(updatedBoards[id]);
+  },
+
+  createBoard: (name) => {
+    const newBoard = createDefaultBoard(name.trim() || "Untitled Board");
+    set((state) => {
+      const boards = {
+        ...state.boards,
+        [state.activeBoardId]: state.board, // snapshot current
+        [newBoard.id]: newBoard,
+      };
+      return { boards, activeBoardId: newBoard.id, board: newBoard };
+    });
+    persist(newBoard);
+    return newBoard.id;
+  },
+
+  renameBoardById: (id, name) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    set((state) => {
+      if (!state.boards[id]) return state;
+      const updated = { ...state.boards[id], name: trimmed };
+      const boards = { ...state.boards, [id]: updated };
+      const isActive = state.activeBoardId === id;
+      return {
+        boards,
+        ...(isActive ? { board: updated } : {}),
+      };
+    });
+    persist(get().board);
+  },
+
+  deleteBoardById: (id) => {
+    set((state) => {
+      if (!state.boards[id]) return state;
+      const remaining = { ...state.boards };
+      delete remaining[id];
+      if (Object.keys(remaining).length === 0) {
+        const seed = createDefaultBoard();
+        return { boards: { [seed.id]: seed }, activeBoardId: seed.id, board: seed };
+      }
+      if (state.activeBoardId === id) {
+        const nextId = Object.keys(remaining)[0];
+        return { boards: remaining, activeBoardId: nextId, board: remaining[nextId] };
+      }
+      return { boards: remaining };
+    });
+    persist(get().board);
   },
 
   undo: () => {
@@ -474,8 +601,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   importBoard: (board: Board) => {
-    const migrated = migrateBoard(board);
-    set({ board: migrated });
+    // Imported boards replace the currently-active board in place.
+    const migrated = migrateBoard({ ...board, id: get().activeBoardId });
+    set((state) => ({
+      board: migrated,
+      boards: { ...state.boards, [state.activeBoardId]: migrated },
+    }));
     persist(migrated);
   },
 }));

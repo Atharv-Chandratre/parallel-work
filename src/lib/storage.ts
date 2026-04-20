@@ -1,66 +1,67 @@
-import { Board } from "./types";
+import { Board, BoardsCollection } from "./types";
 
-export const STORAGE_KEY = "parallel-board";
+export const STORAGE_KEY = "parallel-boards";
+const LEGACY_STORAGE_KEY = "parallel-board";
 
 let apiAvailable: boolean | null = null;
 
-const localStorageBackend = {
-  loadBoard(): Board | null {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw) as Board;
-    } catch {
-      return null;
+function readLocalCollection(): BoardsCollection | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw) as BoardsCollection;
+    // Legacy single-board fallback
+    const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacyRaw) {
+      const legacy = JSON.parse(legacyRaw) as Board;
+      const id = legacy.id || "default";
+      return {
+        activeBoardId: id,
+        boards: { [id]: { ...legacy, id, name: legacy.name ?? "My Board" } },
+      };
     }
-  },
+    return null;
+  } catch {
+    return null;
+  }
+}
 
-  saveBoard(board: Board): void {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(board));
-    } catch {
-      console.error("Failed to save board to localStorage");
-    }
-  },
-};
+function writeLocalCollection(collection: BoardsCollection): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(collection));
+  } catch {
+    console.error("Failed to save boards collection to localStorage");
+  }
+}
 
 export const storage = {
-  async loadBoard(): Promise<Board | null> {
+  async loadBoards(): Promise<BoardsCollection | null> {
     if (typeof window === "undefined") return null;
-
     try {
-      const res = await fetch("/api/board");
+      const res = await fetch("/api/boards");
       if (res.ok) {
         const data = await res.json();
         apiAvailable = true;
-        if (data) return data as Board;
-        // API works but no data on server -- check localStorage for existing data
-        return localStorageBackend.loadBoard();
+        if (data) return data as BoardsCollection;
+        return readLocalCollection();
       }
     } catch {
-      // API not available (e.g. Vercel serverless with no persistent disk)
+      // API not available
     }
-
     apiAvailable = false;
-    return localStorageBackend.loadBoard();
+    return readLocalCollection();
   },
 
-  async saveBoard(board: Board): Promise<{ ok: boolean; apiError?: string }> {
+  async saveBoards(collection: BoardsCollection): Promise<{ ok: boolean; apiError?: string }> {
     if (typeof window === "undefined") return { ok: true };
-
-    // Always save to localStorage as a fallback/backup
-    localStorageBackend.saveBoard(board);
-
+    writeLocalCollection(collection);
     if (apiAvailable) {
       try {
-        const res = await fetch("/api/board", {
+        const res = await fetch("/api/boards", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(board),
+          body: JSON.stringify(collection),
         });
-        if (!res.ok) {
-          return { ok: false, apiError: `HTTP ${res.status}` };
-        }
+        if (!res.ok) return { ok: false, apiError: `HTTP ${res.status}` };
       } catch (err) {
         return { ok: false, apiError: err instanceof Error ? err.message : "network error" };
       }
@@ -68,12 +69,8 @@ export const storage = {
     return { ok: true };
   },
 
-  /**
-   * Best-effort synchronous save using localStorage only. Use on beforeunload
-   * or visibilitychange to avoid losing an in-flight debounced edit.
-   */
-  saveBoardSync(board: Board): void {
+  saveBoardsSync(collection: BoardsCollection): void {
     if (typeof window === "undefined") return;
-    localStorageBackend.saveBoard(board);
+    writeLocalCollection(collection);
   },
 };

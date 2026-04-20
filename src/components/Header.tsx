@@ -5,6 +5,7 @@ import { useBoardStore } from "@/store/boardStore";
 import { useFilterStore, isFilterActive } from "@/store/filterStore";
 import { Board, STATUS_CONFIG, TaskStatus } from "@/lib/types";
 import type { LinkType } from "@/lib/linkUtils";
+import BoardPicker from "./BoardPicker";
 
 function validateBoard(data: unknown): data is Board {
   if (!data || typeof data !== "object") return false;
@@ -116,6 +117,7 @@ export default function Header() {
             Parallel
           </h1>
         </div>
+        <BoardPicker />
         <div className="hidden sm:flex items-center gap-2 text-xs">
           {queued > 0 && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-yellow-500 font-medium">

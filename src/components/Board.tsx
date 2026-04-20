@@ -93,7 +93,12 @@ export default function Board() {
       if (e.key !== STORAGE_KEY || !e.newValue) return;
       try {
         const parsed = JSON.parse(e.newValue);
-        if (parsed && typeof parsed === "object" && Array.isArray(parsed.columns)) {
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          typeof parsed.activeBoardId === "string" &&
+          parsed.boards
+        ) {
           hydrateFromStorage(parsed);
         }
       } catch {

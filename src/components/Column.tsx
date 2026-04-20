@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
-import { Column as ColumnType } from "@/lib/types";
+import { Column as ColumnType, STATUS_CONFIG, TaskStatus } from "@/lib/types";
 import { useBoardStore } from "@/store/boardStore";
 import TaskCard from "./TaskCard";
 import AddTask from "./AddTask";
@@ -25,12 +25,10 @@ function ColumnProgressBar({ column }: { column: ColumnType }) {
     done: column.tasks.filter((t) => t.status === "done").length,
   };
 
-  const segments = [
-    { key: "done", color: "#10b981", count: counts.done },
-    { key: "in-review", color: "#3b82f6", count: counts["in-review"] },
-    { key: "queued", color: "#eab308", count: counts.queued },
-    { key: "todo", color: "#737373", count: counts.todo },
-  ].filter((s) => s.count > 0);
+  const segmentOrder: TaskStatus[] = ["done", "in-review", "queued", "todo"];
+  const segments = segmentOrder
+    .map((key) => ({ key, color: STATUS_CONFIG[key].color, count: counts[key] }))
+    .filter((s) => s.count > 0);
 
   return (
     <div

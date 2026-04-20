@@ -38,9 +38,11 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
     setIsRenaming(false);
   };
 
+  const isDraggable = task.status !== "done";
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: "task", task, columnId },
+    disabled: !isDraggable,
   });
 
   const statusColor = STATUS_CONFIG[task.status].color;
@@ -73,20 +75,22 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
       className={`group rounded-lg border border-[var(--color-card-border)] bg-[var(--color-card-bg)] transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${isDragging ? "opacity-50 shadow-lg" : ""}`}
     >
       <div className="flex items-start gap-2 p-3">
-        <div
-          {...attributes}
-          {...listeners}
-          className="mt-0.5 cursor-grab rounded p-0.5 text-zinc-400 dark:text-zinc-600 opacity-0 group-hover:opacity-100 hover:text-zinc-500 dark:hover:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 active:cursor-grabbing transition-all shrink-0"
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <circle cx="5" cy="3" r="1.5" />
-            <circle cx="11" cy="3" r="1.5" />
-            <circle cx="5" cy="8" r="1.5" />
-            <circle cx="11" cy="8" r="1.5" />
-            <circle cx="5" cy="13" r="1.5" />
-            <circle cx="11" cy="13" r="1.5" />
-          </svg>
-        </div>
+        {isDraggable && (
+          <div
+            {...attributes}
+            {...listeners}
+            className="mt-0.5 cursor-grab rounded p-0.5 text-zinc-400 dark:text-zinc-600 opacity-0 group-hover:opacity-100 hover:text-zinc-500 dark:hover:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 active:cursor-grabbing transition-all shrink-0"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="5" cy="3" r="1.5" />
+              <circle cx="11" cy="3" r="1.5" />
+              <circle cx="5" cy="8" r="1.5" />
+              <circle cx="11" cy="8" r="1.5" />
+              <circle cx="5" cy="13" r="1.5" />
+              <circle cx="11" cy="13" r="1.5" />
+            </svg>
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           {isRenaming ? (
             <input

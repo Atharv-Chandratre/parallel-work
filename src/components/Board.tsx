@@ -12,6 +12,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { useBoardStore } from "@/store/boardStore";
+import { STORAGE_KEY } from "@/lib/storage";
 import Column from "./Column";
 import AddColumn from "./AddColumn";
 import EmptyState from "./EmptyState";
@@ -20,6 +21,8 @@ export default function Board() {
   const { board, initialized, initialize, reorderTask, moveTaskBetweenColumns, moveColumn } =
     useBoardStore();
   const setExpandedTaskId = useBoardStore((s) => s.setExpandedTaskId);
+  const flushPendingSave = useBoardStore((s) => s.flushPendingSave);
+  const hydrateFromStorage = useBoardStore((s) => s.hydrateFromStorage);
 
   useEffect(() => {
     initialize();
@@ -38,6 +41,37 @@ export default function Board() {
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [setExpandedTaskId]);
+
+  // Flush debounced save on tab close / hide to avoid losing in-flight edits.
+  useEffect(() => {
+    const onHide = () => flushPendingSave();
+    window.addEventListener("beforeunload", onHide);
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flushPendingSave();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("beforeunload", onHide);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [flushPendingSave]);
+
+  // Cross-tab sync: another tab wrote to localStorage, mirror it here.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY || !e.newValue) return;
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (parsed && typeof parsed === "object" && Array.isArray(parsed.columns)) {
+          hydrateFromStorage(parsed);
+        }
+      } catch {
+        // ignore malformed payloads from other tabs
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [hydrateFromStorage]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

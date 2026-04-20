@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { nanoid } from "nanoid";
 import { Board, Column, Task, TaskStatus, COLUMN_COLORS } from "@/lib/types";
 import { storage } from "@/lib/storage";
+import { useToastStore } from "./toastStore";
 
 type BoardState = {
   board: Board;
@@ -10,6 +11,8 @@ type BoardState = {
 
   initialize: () => Promise<void>;
   setExpandedTaskId: (taskId: string | null) => void;
+  flushPendingSave: () => void;
+  hydrateFromStorage: (board: Board) => void;
 
   addColumn: (title: string) => void;
   renameColumn: (columnId: string, title: string) => void;
@@ -43,11 +46,39 @@ const createDefaultBoard = (): Board => ({
 });
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingBoard: Board | null = null;
+let lastErrorToastAt = 0;
+
+const flushNow = async () => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
+  }
+  if (!pendingBoard) return;
+  const toSave = pendingBoard;
+  pendingBoard = null;
+  const result = await storage.saveBoard(toSave);
+  if (!result.ok) {
+    // Throttle error toasts so rapid edits don't spam.
+    const now = Date.now();
+    if (now - lastErrorToastAt > 5000) {
+      lastErrorToastAt = now;
+      useToastStore
+        .getState()
+        .push(
+          `Couldn't save to server (${result.apiError ?? "unknown error"}). Changes kept in this browser only.`,
+          "error"
+        );
+    }
+  }
+};
 
 const persist = (board: Board) => {
+  pendingBoard = board;
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
-    storage.saveBoard(board);
+    debounceTimer = null;
+    void flushNow();
   }, 300);
 };
 
@@ -90,6 +121,21 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   setExpandedTaskId: (taskId) => set({ expandedTaskId: taskId }),
+
+  flushPendingSave: () => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+    if (pendingBoard) {
+      storage.saveBoardSync(pendingBoard);
+    }
+  },
+
+  hydrateFromStorage: (board: Board) => {
+    // Update state without triggering a persist write (prevents cross-tab loop).
+    set({ board: migrateBoard(board) });
+  },
 
   addColumn: (title: string) => {
     set((state) => {

@@ -1,6 +1,6 @@
 import { Board } from "./types";
 
-const STORAGE_KEY = "parallel-board";
+export const STORAGE_KEY = "parallel-board";
 
 let apiAvailable: boolean | null = null;
 
@@ -45,22 +45,35 @@ export const storage = {
     return localStorageBackend.loadBoard();
   },
 
-  async saveBoard(board: Board): Promise<void> {
-    if (typeof window === "undefined") return;
+  async saveBoard(board: Board): Promise<{ ok: boolean; apiError?: string }> {
+    if (typeof window === "undefined") return { ok: true };
 
     // Always save to localStorage as a fallback/backup
     localStorageBackend.saveBoard(board);
 
     if (apiAvailable) {
       try {
-        await fetch("/api/board", {
+        const res = await fetch("/api/board", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(board),
         });
-      } catch {
-        // API write failed, localStorage already has the data
+        if (!res.ok) {
+          return { ok: false, apiError: `HTTP ${res.status}` };
+        }
+      } catch (err) {
+        return { ok: false, apiError: err instanceof Error ? err.message : "network error" };
       }
     }
+    return { ok: true };
+  },
+
+  /**
+   * Best-effort synchronous save using localStorage only. Use on beforeunload
+   * or visibilitychange to avoid losing an in-flight debounced edit.
+   */
+  saveBoardSync(board: Board): void {
+    if (typeof window === "undefined") return;
+    localStorageBackend.saveBoard(board);
   },
 };

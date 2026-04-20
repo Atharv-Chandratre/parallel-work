@@ -2,6 +2,7 @@
 
 import Header from "@/components/Header";
 import Board from "@/components/Board";
+import Toasts from "@/components/Toasts";
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
       <main id="board" className="flex flex-1 overflow-hidden">
         <Board />
       </main>
+      <Toasts />
     </div>
   );
 }

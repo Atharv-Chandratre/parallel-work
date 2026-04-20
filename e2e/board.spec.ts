@@ -254,6 +254,22 @@ test.describe("Task management", () => {
     await expect(cardA.getByPlaceholder(/What to tell the agent/)).toHaveCount(0);
   });
 
+  test("command palette opens via Cmd+K and runs a command", async ({ page }) => {
+    await addTask(page, "Hello");
+    const modifier = process.platform === "darwin" ? "Meta" : "Control";
+    await page.keyboard.press(`${modifier}+k`);
+
+    const palette = page.getByRole("dialog", { name: "Command palette" });
+    await expect(palette).toBeVisible();
+
+    // Run "Clear filters" via typing + Enter
+    await palette.getByRole("textbox", { name: "Command" }).fill("clear filters");
+    await page.keyboard.press("Enter");
+
+    // Palette should close
+    await expect(palette).not.toBeVisible();
+  });
+
   test("header search filters tasks across columns", async ({ page }) => {
     await addTask(page, "Buy coffee");
     await addTask(page, "Write report");

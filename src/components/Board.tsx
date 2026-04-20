@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import CommandPalette from "./CommandPalette";
 import {
   DndContext,
   DragEndEvent,
@@ -25,6 +26,7 @@ export default function Board() {
   const hydrateFromStorage = useBoardStore((s) => s.hydrateFromStorage);
   const undo = useBoardStore((s) => s.undo);
   const redo = useBoardStore((s) => s.redo);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   useEffect(() => {
     initialize();
@@ -58,8 +60,9 @@ export default function Board() {
     };
   }, [flushPendingSave]);
 
-  // Global undo/redo shortcuts. Skip when focus is in an editable field
-  // so Cmd-Z inside an input is the browser's own undo.
+  // Global keyboard shortcuts. Skip Cmd-Z when focus is in an editable
+  // field so the browser's native undo in that field still works.
+  // Cmd-K opens the command palette regardless of focus.
   useEffect(() => {
     const isEditable = (el: EventTarget | null) => {
       if (!(el instanceof HTMLElement)) return false;
@@ -67,12 +70,18 @@ export default function Board() {
       return tag === "INPUT" || tag === "TEXTAREA" || el.isContentEditable;
     };
     const onKey = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey)) return;
-      if (e.key.toLowerCase() !== "z") return;
-      if (isEditable(e.target)) return;
-      e.preventDefault();
-      if (e.shiftKey) redo();
-      else undo();
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+        return;
+      }
+      if (mod && e.key.toLowerCase() === "z") {
+        if (isEditable(e.target)) return;
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -184,30 +193,36 @@ export default function Board() {
 
   if (board.columns.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4 pt-5">
-        <EmptyState />
-        <AddColumn compact />
-      </div>
+      <>
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4 pt-5">
+          <EmptyState />
+          <AddColumn compact />
+        </div>
+        {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
+      </>
     );
   }
 
   const columnIds = board.columns.map((c) => `column-${c.id}`);
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-        <div className="flex flex-1 gap-4 overflow-x-auto p-4 pt-5">
-          {board.columns.map((column) => (
-            <Column key={column.id} column={column} />
-          ))}
-          <AddColumn />
-        </div>
-      </SortableContext>
-    </DndContext>
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+          <div className="flex flex-1 gap-4 overflow-x-auto p-4 pt-5">
+            {board.columns.map((column) => (
+              <Column key={column.id} column={column} />
+            ))}
+            <AddColumn />
+          </div>
+        </SortableContext>
+      </DndContext>
+      {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
+    </>
   );
 }

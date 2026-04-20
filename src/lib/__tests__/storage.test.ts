@@ -110,6 +110,24 @@ describe("storage", () => {
     expect(localStorage.getItem("parallel-boards")).toBe(JSON.stringify(mockCollection));
   });
 
+  it("saveBoards surfaces the server's detail message on a 500 response", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockCollection),
+    });
+    const { storage } = await import("@/lib/storage");
+    await storage.loadBoards();
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ error: "Failed to save boards", detail: "EACCES: disk full" }),
+    } as Response);
+    const result = await storage.saveBoards(mockCollection);
+    expect(result.ok).toBe(false);
+    expect(result.apiError).toContain("HTTP 500");
+    expect(result.apiError).toContain("EACCES: disk full");
+  });
+
   it("saveBoards no-ops on server", async () => {
     const savedWindow = globalThis.window;
     // @ts-expect-error - simulating server environment

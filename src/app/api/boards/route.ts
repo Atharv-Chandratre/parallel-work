@@ -41,7 +41,9 @@ export async function GET() {
     if (err instanceof Error && "code" in err && (err as NodeJS.ErrnoException).code === "ENOENT") {
       return NextResponse.json(null);
     }
-    return NextResponse.json({ error: "Failed to read boards" }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[api/boards] GET failed:", err);
+    return NextResponse.json({ error: "Failed to read boards", detail: message }, { status: 500 });
   }
 }
 
@@ -51,7 +53,9 @@ export async function PUT(request: Request) {
     await fs.mkdir(DATA_DIR, { recursive: true });
     await fs.writeFile(BOARDS_FILE, JSON.stringify(payload, null, 2), "utf-8");
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Failed to save boards" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[api/boards] PUT failed:", err);
+    return NextResponse.json({ error: "Failed to save boards", detail: message }, { status: 500 });
   }
 }

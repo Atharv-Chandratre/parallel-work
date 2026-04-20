@@ -61,7 +61,18 @@ export const storage = {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(collection),
         });
-        if (!res.ok) return { ok: false, apiError: `HTTP ${res.status}` };
+        if (!res.ok) {
+          // Best-effort: pull the server's error detail so the user sees a useful toast.
+          let detail = `HTTP ${res.status}`;
+          try {
+            const body = (await res.json()) as { error?: string; detail?: string };
+            if (body?.detail) detail = `HTTP ${res.status}: ${body.detail}`;
+            else if (body?.error) detail = `HTTP ${res.status}: ${body.error}`;
+          } catch {
+            // Non-JSON body, fall through with status-only message.
+          }
+          return { ok: false, apiError: detail };
+        }
       } catch (err) {
         return { ok: false, apiError: err instanceof Error ? err.message : "network error" };
       }

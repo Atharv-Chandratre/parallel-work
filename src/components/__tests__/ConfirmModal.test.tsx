@@ -76,4 +76,56 @@ describe("ConfirmModal", () => {
     await user.click(screen.getByText("Delete project?"));
     expect(onCancel).not.toHaveBeenCalled();
   });
+
+  it("auto-focuses the Cancel button when opened", () => {
+    render(<ConfirmModal {...defaultProps} />);
+    expect(document.activeElement).toBe(screen.getByText("Cancel"));
+  });
+
+  it("has a proper dialog role with labelled title and message", () => {
+    render(<ConfirmModal {...defaultProps} />);
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    const titleId = dialog.getAttribute("aria-labelledby");
+    const descId = dialog.getAttribute("aria-describedby");
+    expect(titleId).toBeTruthy();
+    expect(descId).toBeTruthy();
+    expect(document.getElementById(titleId!)?.textContent).toBe("Delete project?");
+    expect(document.getElementById(descId!)?.textContent).toBe(
+      "This will permanently delete the project."
+    );
+  });
+
+  it("focus trap cycles Tab from Confirm back to Cancel", async () => {
+    const user = userEvent.setup();
+    render(<ConfirmModal {...defaultProps} />);
+    // Start on Cancel (auto-focused), Tab moves to Confirm.
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByText("Delete"));
+    // Tab again wraps back to Cancel.
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByText("Cancel"));
+  });
+
+  it("focus trap cycles Shift+Tab from Cancel back to Confirm", async () => {
+    const user = userEvent.setup();
+    render(<ConfirmModal {...defaultProps} />);
+    // Cancel is auto-focused; Shift+Tab should wrap to Confirm.
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(screen.getByText("Delete"));
+  });
+
+  it("restores focus to the previously-focused element when unmounted", async () => {
+    const trigger = document.createElement("button");
+    trigger.textContent = "Open";
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    const { unmount } = render(<ConfirmModal {...defaultProps} />);
+    expect(document.activeElement).toBe(screen.getByText("Cancel"));
+    unmount();
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
 });

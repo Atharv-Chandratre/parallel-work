@@ -310,6 +310,33 @@ test.describe("Task management", () => {
     await expect(page.getByText("Write report")).toBeVisible();
   });
 
+  test("status filter chip narrows visible tasks; Clear resets", async ({ page }) => {
+    await addTask(page, "Only Task");
+
+    // Activate the "In Review" chip; the (todo) task should disappear.
+    await page.getByRole("button", { name: /^In Review$/ }).click();
+    await expect(page.getByText("Only Task")).not.toBeVisible();
+
+    // Clear filters restores the task.
+    await page.getByRole("button", { name: /Clear all filters/i }).click();
+    await expect(page.getByText("Only Task")).toBeVisible();
+  });
+
+  test("undo and redo via keyboard shortcuts (Cmd+Z / Shift+Cmd+Z)", async ({ page }) => {
+    await addTask(page, "Undoable Task");
+    const modifier = process.platform === "darwin" ? "Meta" : "Control";
+
+    // Click on the board body to move focus away from the (input) add-task field,
+    // otherwise Cmd+Z is intercepted as a native input undo per the Board.tsx guard.
+    await page.getByRole("heading", { name: "Test Project" }).first().click();
+
+    await page.keyboard.press(`${modifier}+z`);
+    await expect(page.getByText("Undoable Task")).not.toBeVisible();
+
+    await page.keyboard.press(`Shift+${modifier}+z`);
+    await expect(page.getByText("Undoable Task")).toBeVisible();
+  });
+
   test("clicking outside an expanded task collapses it", async ({ page }) => {
     await addTask(page, "Outside Click Task");
 

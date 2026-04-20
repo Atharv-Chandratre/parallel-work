@@ -136,4 +136,78 @@ describe("TaskDetail", () => {
     const links = useBoardStore.getState().board.columns[0].tasks[0].links ?? [];
     expect(links).toHaveLength(0);
   });
+
+  describe("link auto-title", () => {
+    beforeEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("auto-fills the task title when adding a link to an untitled task", async () => {
+      // Start with an empty-title task so the auto-fill branch triggers.
+      const empty: Task = { ...baseTask, title: "" };
+      useBoardStore.setState((s) => ({
+        board: {
+          ...s.board,
+          columns: s.board.columns.map((c) => ({
+            ...c,
+            tasks: c.tasks.map((t) => (t.id === baseTask.id ? empty : t)),
+          })),
+        },
+      }));
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ ok: true, title: "Fetched Title" }), { status: 200 })
+        );
+
+      const user = userEvent.setup();
+      render(<TaskDetail task={empty} columnId="col-1" />);
+      await user.type(screen.getByPlaceholderText(/Paste GitHub/), "https://example.com/a");
+      await user.click(document.body);
+
+      // fetchLinkTitle resolves async — wait a tick.
+      await new Promise((r) => setTimeout(r, 30));
+      expect(useBoardStore.getState().board.columns[0].tasks[0].title).toBe("Fetched Title");
+    });
+
+    it("does NOT overwrite a non-empty task title on link add", async () => {
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ ok: true, title: "Fetched Title" }), { status: 200 })
+        );
+      const user = userEvent.setup();
+      render(<TaskDetail task={baseTask} columnId="col-1" />);
+      await user.type(screen.getByPlaceholderText(/Paste GitHub/), "https://example.com/b");
+      await user.click(document.body);
+      await new Promise((r) => setTimeout(r, 30));
+      expect(useBoardStore.getState().board.columns[0].tasks[0].title).toBe("Test Task");
+    });
+
+    it('the "Use link title as task title" button updates the title from a fetched response', async () => {
+      const taskWithLink: Task = {
+        ...baseTask,
+        links: [{ id: "l1", url: "https://example.com/page" }],
+      };
+      useBoardStore.setState((s) => ({
+        board: {
+          ...s.board,
+          columns: s.board.columns.map((c) => ({
+            ...c,
+            tasks: c.tasks.map((t) => (t.id === baseTask.id ? taskWithLink : t)),
+          })),
+        },
+      }));
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ ok: true, title: "On-Demand Title" }), { status: 200 })
+        );
+      const user = userEvent.setup();
+      render(<TaskDetail task={taskWithLink} columnId="col-1" />);
+      await user.click(screen.getByLabelText("Use link title as task title"));
+      await new Promise((r) => setTimeout(r, 30));
+      expect(useBoardStore.getState().board.columns[0].tasks[0].title).toBe("On-Demand Title");
+    });
+  });
 });

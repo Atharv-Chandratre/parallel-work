@@ -102,4 +102,36 @@ describe("TaskCard", () => {
     });
     expect(screen.queryByPlaceholderText(/What to tell the agent/)).not.toBeInTheDocument();
   });
+
+  it("renders a link icon for each of the first 3 links", () => {
+    renderCard(
+      makeTask({
+        links: [
+          { id: "l1", url: "https://github.com/a/b" },
+          { id: "l2", url: "https://company.atlassian.net/browse/X-1" },
+          { id: "l3", url: "https://example.com" },
+        ],
+      })
+    );
+    expect(screen.getByLabelText("Open link: https://github.com/a/b")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Open link: https://company.atlassian.net/browse/X-1")
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Open link: https://example.com")).toBeInTheDocument();
+  });
+
+  it('shows a "+N" overflow pill when there are more than 3 links', () => {
+    renderCard(
+      makeTask({
+        links: [
+          { id: "l1", url: "https://github.com/a/b" },
+          { id: "l2", url: "https://company.atlassian.net/browse/X-1" },
+          { id: "l3", url: "https://example.com" },
+          { id: "l4", url: "https://slack.com/x" },
+          { id: "l5", url: "https://news.ycombinator.com" },
+        ],
+      })
+    );
+    expect(screen.getByText("+2")).toBeInTheDocument();
+  });
 });

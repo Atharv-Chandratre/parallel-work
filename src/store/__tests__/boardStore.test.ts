@@ -485,4 +485,180 @@ describe("boardStore", () => {
       expect(getState().board).toBe(before);
     });
   });
+
+  describe("Multi-board actions", () => {
+    beforeEach(() => {
+      _resetHistoryForTests();
+      useBoardStore.setState({
+        board: { id: "b1", name: "First", columns: [] },
+        boards: { b1: { id: "b1", name: "First", columns: [] } },
+        activeBoardId: "b1",
+        initialized: true,
+        undoCount: 0,
+        redoCount: 0,
+      });
+    });
+
+    it("createBoard appends a new board and makes it active", () => {
+      const newId = getState().createBoard("Second");
+      const s = getState();
+      expect(s.activeBoardId).toBe(newId);
+      expect(s.board.name).toBe("Second");
+      expect(Object.keys(s.boards)).toHaveLength(2);
+    });
+
+    it("switchBoard changes active board to an existing one", () => {
+      const secondId = getState().createBoard("Second");
+      getState().switchBoard("b1");
+      expect(getState().activeBoardId).toBe("b1");
+      expect(getState().board.id).toBe("b1");
+      getState().switchBoard(secondId);
+      expect(getState().activeBoardId).toBe(secondId);
+    });
+
+    it("switchBoard to unknown id is a no-op", () => {
+      const before = getState();
+      getState().switchBoard("does-not-exist");
+      expect(getState().activeBoardId).toBe(before.activeBoardId);
+    });
+
+    it("renameBoardById updates the board's name and reflects into active board", () => {
+      getState().renameBoardById("b1", "Renamed");
+      expect(getState().boards["b1"].name).toBe("Renamed");
+      expect(getState().board.name).toBe("Renamed");
+    });
+
+    it("renameBoardById ignores blank names", () => {
+      getState().renameBoardById("b1", "   ");
+      expect(getState().boards["b1"].name).toBe("First");
+    });
+
+    it("deleteBoardById removes a non-active board without switching", () => {
+      const second = getState().createBoard("Second");
+      getState().switchBoard("b1"); // active = b1
+      getState().deleteBoardById(second);
+      expect(getState().boards[second]).toBeUndefined();
+      expect(getState().activeBoardId).toBe("b1");
+    });
+
+    it("deleteBoardById switches to another board when deleting the active one", () => {
+      const second = getState().createBoard("Second");
+      // second is active because createBoard switches to the new one
+      expect(getState().activeBoardId).toBe(second);
+      getState().deleteBoardById(second);
+      expect(getState().boards[second]).toBeUndefined();
+      expect(getState().activeBoardId).toBe("b1");
+      expect(getState().board.id).toBe("b1");
+    });
+
+    it("deleteBoardById seeds a fresh board when deleting the last one", () => {
+      getState().deleteBoardById("b1");
+      const s = getState();
+      expect(Object.keys(s.boards)).toHaveLength(1);
+      expect(s.board.columns).toEqual([]);
+      expect(s.activeBoardId).toBe(s.board.id);
+    });
+  });
+
+  describe("Task link actions", () => {
+    beforeEach(() => {
+      _resetHistoryForTests();
+      useBoardStore.setState({
+        board: {
+          id: "b1",
+          name: "First",
+          columns: [
+            {
+              id: "c1",
+              title: "C",
+              color: "#000",
+              order: 0,
+              tasks: [
+                {
+                  id: "t1",
+                  title: "T1",
+                  status: "todo",
+                  notes: "",
+                  order: 0,
+                  createdAt: 1,
+                  links: [],
+                },
+              ],
+            },
+          ],
+        },
+        boards: {},
+        activeBoardId: "b1",
+        initialized: true,
+      });
+    });
+
+    function links() {
+      return getState().board.columns[0].tasks[0].links ?? [];
+    }
+
+    it("addTaskLink appends a new link entry", () => {
+      getState().addTaskLink("c1", "t1", "https://github.com/x/y");
+      expect(links()).toHaveLength(1);
+      expect(links()[0].url).toBe("https://github.com/x/y");
+    });
+
+    it("addTaskLink trims whitespace and ignores empty values", () => {
+      getState().addTaskLink("c1", "t1", "   ");
+      expect(links()).toHaveLength(0);
+      getState().addTaskLink("c1", "t1", "  https://a.b  ");
+      expect(links()[0].url).toBe("https://a.b");
+    });
+
+    it("updateTaskLink changes the url of a specific link", () => {
+      getState().addTaskLink("c1", "t1", "https://before");
+      const linkId = links()[0].id;
+      getState().updateTaskLink("c1", "t1", linkId, "https://after");
+      expect(links()[0].url).toBe("https://after");
+    });
+
+    it("updateTaskLink with an empty string removes the link", () => {
+      getState().addTaskLink("c1", "t1", "https://gone");
+      const linkId = links()[0].id;
+      getState().updateTaskLink("c1", "t1", linkId, "   ");
+      expect(links()).toHaveLength(0);
+    });
+
+    it("removeTaskLink deletes the matching link", () => {
+      getState().addTaskLink("c1", "t1", "https://a");
+      getState().addTaskLink("c1", "t1", "https://b");
+      const firstId = links()[0].id;
+      getState().removeTaskLink("c1", "t1", firstId);
+      const remaining = links();
+      expect(remaining).toHaveLength(1);
+      expect(remaining[0].url).toBe("https://b");
+    });
+
+    it("migrates legacy githubUrl into links[] on import", () => {
+      getState().importBoard({
+        id: "irrelevant",
+        columns: [
+          {
+            id: "c1",
+            title: "C",
+            color: "#000",
+            order: 0,
+            tasks: [
+              {
+                id: "t1",
+                title: "T",
+                status: "todo",
+                notes: "",
+                order: 0,
+                createdAt: 1,
+                githubUrl: "https://legacy.example",
+              },
+            ],
+          },
+        ],
+      });
+      const migrated = getState().board.columns[0].tasks[0].links ?? [];
+      expect(migrated[0].url).toBe("https://legacy.example");
+    });
+  });
 });

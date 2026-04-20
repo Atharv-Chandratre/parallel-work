@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import Column from "@/components/Column";
 import { DndContext } from "@dnd-kit/core";
 import { useBoardStore } from "@/store/boardStore";
-import type { Column as ColumnType, Task, TaskStatus } from "@/lib/types";
+import { STATUS_CONFIG, type Column as ColumnType, type Task, type TaskStatus } from "@/lib/types";
 
 vi.mock("@/lib/storage", () => ({
   STORAGE_KEY: "parallel-boards",
@@ -79,6 +79,31 @@ describe("Column", () => {
     await user.click(screen.getByRole("button", { name: "Delete Project" }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText(/Delete "Deletable"\?/)).toBeInTheDocument();
+  });
+
+  it("progress bar segments use STATUS_CONFIG colors", () => {
+    const col = makeColumn([
+      task("a", "todo"),
+      task("b", "queued"),
+      task("c", "in-review"),
+      task("d", "done"),
+    ]);
+    const { container } = renderColumn(col);
+    // ProgressBar root: the sibling div just before the droppable area with this class signature.
+    const progressRoot = container.querySelector(".flex.h-1.w-full.gap-px");
+    expect(progressRoot).toBeTruthy();
+    const segments = Array.from(progressRoot!.children) as HTMLElement[];
+    // 4 statuses present → 4 segments rendered.
+    expect(segments).toHaveLength(4);
+    const colors = segments.map((seg) => seg.style.backgroundColor);
+    const hexToRgb = (hex: string) => {
+      const n = parseInt(hex.replace("#", ""), 16);
+      return `rgb(${(n >> 16) & 0xff}, ${(n >> 8) & 0xff}, ${n & 0xff})`;
+    };
+    const expected: TaskStatus[] = ["done", "in-review", "queued", "todo"];
+    expected.forEach((status, i) => {
+      expect(colors[i]).toBe(hexToRgb(STATUS_CONFIG[status].color));
+    });
   });
 
   it("clears done tasks via modal confirmation", async () => {

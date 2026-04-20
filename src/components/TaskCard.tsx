@@ -132,17 +132,27 @@ function TaskCard({ task, columnId }: TaskCardProps) {
         </div>
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-1">
-            {task.githubUrl && (
+            {(task.links ?? []).slice(0, 3).map((link) => (
               <a
-                href={task.githubUrl}
+                key={link.id}
+                href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors cursor-pointer"
-                title={task.githubUrl}
+                title={link.url}
+                aria-label={`Open link: ${link.url}`}
               >
-                <LinkIcon url={task.githubUrl} size={14} />
+                <LinkIcon url={link.url} size={14} />
               </a>
+            ))}
+            {(task.links?.length ?? 0) > 3 && (
+              <span
+                className="text-[10px] font-medium text-zinc-500"
+                title={`${task.links!.length - 3} more link${task.links!.length - 3 === 1 ? "" : "s"}`}
+              >
+                +{task.links!.length - 3}
+              </span>
             )}
             <button
               onClick={() => deleteTask(columnId, task.id)}

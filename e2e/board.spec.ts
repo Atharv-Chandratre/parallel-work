@@ -223,14 +223,14 @@ test.describe("Task management", () => {
       .filter({ hasText: "Link Task" });
     await taskSpan.click();
 
-    const linkInput = page.getByPlaceholder(/Paste link/);
-    await expect(linkInput).toBeVisible();
-    await linkInput.fill("https://example.com/relevant-doc");
+    const addLinkInput = page.getByPlaceholder(/Paste GitHub/);
+    await expect(addLinkInput).toBeVisible();
+    await addLinkInput.fill("https://example.com/relevant-doc");
     await page.getByRole("heading", { name: "Test Project" }).first().click();
-    await expect(page.getByPlaceholder(/Paste link/)).toHaveCount(0);
+    await expect(page.getByPlaceholder(/Paste GitHub/)).toHaveCount(0);
 
     await taskSpan.click();
-    await expect(linkInput).toHaveValue("https://example.com/relevant-doc");
+    await expect(page.locator('input[value="https://example.com/relevant-doc"]')).toBeVisible();
   });
 
   test("only one task can be expanded at a time", async ({ page }) => {
@@ -277,7 +277,7 @@ test.describe("Task management", () => {
       .filter({ hasText: "GitHub Task" });
     await taskSpan.click();
 
-    const linkInput = page.getByPlaceholder(/Paste link/);
+    const linkInput = page.getByPlaceholder(/Paste GitHub/);
     await linkInput.fill("https://github.com/owner/repo");
     await page.getByRole("heading", { name: "Test Project" }).first().click();
 
@@ -294,7 +294,7 @@ test.describe("Task management", () => {
       .filter({ hasText: "Jira Task" });
     await taskSpan.click();
 
-    const linkInput = page.getByPlaceholder(/Paste link/);
+    const linkInput = page.getByPlaceholder(/Paste GitHub/);
     await linkInput.fill("https://mycompany.atlassian.net/browse/PROJ-123");
     await page.getByRole("heading", { name: "Test Project" }).first().click();
 
@@ -311,7 +311,7 @@ test.describe("Task management", () => {
       .filter({ hasText: "Experiment Task" });
     await taskSpan.click();
 
-    const linkInput = page.getByPlaceholder(/Paste link/);
+    const linkInput = page.getByPlaceholder(/Paste GitHub/);
     await linkInput.fill(
       "https://ops.doordash.team/decision-systems/dynamic-values-v2/experiments/67b12aa0-6e5e-4985-be2b-cbda5ada8fa2"
     );

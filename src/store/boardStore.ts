@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { nanoid } from "nanoid";
-import { Board, Column, Task, TaskStatus, COLUMN_COLORS } from "@/lib/types";
+import { Board, Column, Task, TaskStatus, TaskLink, COLUMN_COLORS } from "@/lib/types";
 import { storage } from "@/lib/storage";
 import { useToastStore } from "./toastStore";
 
@@ -23,12 +23,15 @@ type BoardState = {
   updateTask: (
     columnId: string,
     taskId: string,
-    updates: Partial<Pick<Task, "title" | "notes" | "status" | "githubUrl">>
+    updates: Partial<Pick<Task, "title" | "notes" | "status">>
   ) => void;
   deleteTask: (columnId: string, taskId: string) => void;
   deleteDoneTasks: (columnId: string) => void;
   cycleTaskStatus: (columnId: string, taskId: string, direction?: number) => void;
   reorderTask: (columnId: string, fromIndex: number, toIndex: number) => void;
+  addTaskLink: (columnId: string, taskId: string, url: string) => void;
+  updateTaskLink: (columnId: string, taskId: string, linkId: string, url: string) => void;
+  removeTaskLink: (columnId: string, taskId: string, linkId: string) => void;
   moveTaskBetweenColumns: (
     fromColumnId: string,
     toColumnId: string,
@@ -100,7 +103,12 @@ function migrateBoard(board: Board): Board {
         const status = VALID_STATUSES.includes(task.status as TaskStatus)
           ? (task.status as TaskStatus)
           : (OLD_TO_NEW_STATUS[task.status] ?? "todo");
-        return { ...task, status };
+        // Legacy githubUrl -> links[]
+        let links = Array.isArray(task.links) ? task.links : [];
+        if (task.githubUrl && !links.some((l) => l.url === task.githubUrl)) {
+          links = [{ id: nanoid(), url: task.githubUrl }, ...links];
+        }
+        return { ...task, status, links };
       }),
     })),
   };
@@ -207,8 +215,78 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             notes: "",
             order: col.tasks.length,
             createdAt: Date.now(),
+            links: [],
           };
           return { ...col, tasks: [...col.tasks, newTask] };
+        }),
+      };
+      persist(board);
+      return { board };
+    });
+  },
+
+  addTaskLink: (columnId, taskId, url) => {
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    set((state) => {
+      const board = {
+        ...state.board,
+        columns: state.board.columns.map((col) => {
+          if (col.id !== columnId) return col;
+          return {
+            ...col,
+            tasks: col.tasks.map((task) => {
+              if (task.id !== taskId) return task;
+              const existing = task.links ?? [];
+              const newLink: TaskLink = { id: nanoid(), url: trimmed };
+              return { ...task, links: [...existing, newLink] };
+            }),
+          };
+        }),
+      };
+      persist(board);
+      return { board };
+    });
+  },
+
+  updateTaskLink: (columnId, taskId, linkId, url) => {
+    const trimmed = url.trim();
+    set((state) => {
+      const board = {
+        ...state.board,
+        columns: state.board.columns.map((col) => {
+          if (col.id !== columnId) return col;
+          return {
+            ...col,
+            tasks: col.tasks.map((task) => {
+              if (task.id !== taskId) return task;
+              const links = (task.links ?? []).flatMap((l) => {
+                if (l.id !== linkId) return [l];
+                return trimmed ? [{ ...l, url: trimmed }] : [];
+              });
+              return { ...task, links };
+            }),
+          };
+        }),
+      };
+      persist(board);
+      return { board };
+    });
+  },
+
+  removeTaskLink: (columnId, taskId, linkId) => {
+    set((state) => {
+      const board = {
+        ...state.board,
+        columns: state.board.columns.map((col) => {
+          if (col.id !== columnId) return col;
+          return {
+            ...col,
+            tasks: col.tasks.map((task) => {
+              if (task.id !== taskId) return task;
+              return { ...task, links: (task.links ?? []).filter((l) => l.id !== linkId) };
+            }),
+          };
         }),
       };
       persist(board);

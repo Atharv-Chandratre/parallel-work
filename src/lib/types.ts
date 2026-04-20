@@ -1,5 +1,10 @@
 export type TaskStatus = "todo" | "queued" | "in-review" | "done";
 
+export type TaskLink = {
+  id: string;
+  url: string;
+};
+
 export type Task = {
   id: string;
   title: string;
@@ -9,7 +14,11 @@ export type Task = {
   createdAt: number;
   startedAt?: number;
   completedAt?: number;
+  /**
+   * @deprecated use `links` instead. Kept for one release for legacy board import.
+   */
   githubUrl?: string;
+  links?: TaskLink[];
 };
 
 export type Column = {

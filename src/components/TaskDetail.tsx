@@ -29,10 +29,71 @@ function formatElapsed(startTs: number): string {
   return `${minutes}m`;
 }
 
+function LinkRow({
+  initialUrl,
+  onSave,
+  onRemove,
+}: {
+  initialUrl: string;
+  onSave: (url: string) => void;
+  onRemove: () => void;
+}) {
+  const [value, setValue] = useState(initialUrl);
+  useEffect(() => {
+    setValue(initialUrl);
+  }, [initialUrl]);
+  const commit = () => {
+    const trimmed = value.trim();
+    if (trimmed === initialUrl) return;
+    onSave(trimmed);
+  };
+  return (
+    <div className="flex items-center gap-1">
+      <span className="w-[11px] shrink-0 text-zinc-400">
+        <LinkIcon url={value} size={11} />
+      </span>
+      <input
+        type="url"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          }
+        }}
+        className="flex-1 rounded-md bg-white dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none focus:border-blue-400 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 transition-all"
+      />
+      <button
+        onClick={onRemove}
+        aria-label="Remove link"
+        title="Remove link"
+        className="rounded p-1 text-zinc-400 hover:text-red-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+      >
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 export default function TaskDetail({ task, columnId }: TaskDetailProps) {
   const [notes, setNotes] = useState(task.notes);
-  const [githubUrl, setGithubUrl] = useState(task.githubUrl ?? "");
+  const [newLinkUrl, setNewLinkUrl] = useState("");
   const updateTask = useBoardStore((s) => s.updateTask);
+  const addTaskLink = useBoardStore((s) => s.addTaskLink);
+  const updateTaskLink = useBoardStore((s) => s.updateTaskLink);
+  const removeTaskLink = useBoardStore((s) => s.removeTaskLink);
+  const links = task.links ?? [];
   const [elapsed, setElapsed] = useState("");
 
   useEffect(() => {
@@ -52,11 +113,11 @@ export default function TaskDetail({ task, columnId }: TaskDetailProps) {
     }
   };
 
-  const saveGithubUrl = () => {
-    const trimmed = githubUrl.trim();
-    if (trimmed !== (task.githubUrl ?? "")) {
-      updateTask(columnId, task.id, { githubUrl: trimmed || undefined });
-    }
+  const submitNewLink = () => {
+    const trimmed = newLinkUrl.trim();
+    if (!trimmed) return;
+    addTaskLink(columnId, task.id, trimmed);
+    setNewLinkUrl("");
   };
 
   return (
@@ -77,20 +138,40 @@ export default function TaskDetail({ task, columnId }: TaskDetailProps) {
 
       <div className="mt-2 space-y-1">
         <label className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-          <LinkIcon url={githubUrl} size={11} />
-          Link
+          <LinkIcon url={links[0]?.url ?? ""} size={11} />
+          Links
         </label>
-        <input
-          type="url"
-          value={githubUrl}
-          onChange={(e) => setGithubUrl(e.target.value)}
-          onBlur={saveGithubUrl}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") saveGithubUrl();
-          }}
-          placeholder="Paste link..."
-          className="w-full rounded-md bg-white dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none focus:border-blue-400 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 transition-all"
-        />
+        <div className="flex flex-col gap-1">
+          {links.map((link) => (
+            <LinkRow
+              key={link.id}
+              initialUrl={link.url}
+              onSave={(url) => updateTaskLink(columnId, task.id, link.id, url)}
+              onRemove={() => removeTaskLink(columnId, task.id, link.id)}
+            />
+          ))}
+          <div className="flex items-center gap-1">
+            <span className="w-[11px] shrink-0 text-zinc-400">
+              <LinkIcon url={newLinkUrl} size={11} />
+            </span>
+            <input
+              type="url"
+              value={newLinkUrl}
+              onChange={(e) => setNewLinkUrl(e.target.value)}
+              onBlur={submitNewLink}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submitNewLink();
+                }
+              }}
+              placeholder={
+                links.length > 0 ? "Add another link..." : "Paste GitHub / Jira / Slack link..."
+              }
+              className="flex-1 rounded-md bg-white dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none focus:border-blue-400 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 transition-all"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">

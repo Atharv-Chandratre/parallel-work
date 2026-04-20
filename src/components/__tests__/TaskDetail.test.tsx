@@ -86,26 +86,52 @@ describe("TaskDetail", () => {
     expect(dateElements.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("renders link input with current value when githubUrl is set", () => {
-    const taskWithLink: Task = {
+  it("renders existing link rows for task.links", () => {
+    const taskWithLinks: Task = {
       ...baseTask,
-      githubUrl: "https://example.com/doc",
+      links: [
+        { id: "l1", url: "https://github.com/owner/repo/pull/1" },
+        { id: "l2", url: "https://company.atlassian.net/browse/PROJ-123" },
+      ],
     };
-    render(<TaskDetail task={taskWithLink} columnId="col-1" />);
-    const linkInput = screen.getByPlaceholderText(/Paste link/) as HTMLInputElement;
-    expect(linkInput.value).toBe("https://example.com/doc");
+    render(<TaskDetail task={taskWithLinks} columnId="col-1" />);
+    expect(screen.getByDisplayValue("https://github.com/owner/repo/pull/1")).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue("https://company.atlassian.net/browse/PROJ-123")
+    ).toBeInTheDocument();
   });
 
-  it("saves link on blur", async () => {
+  it("adds a new link on blur of the add-link input", async () => {
     const user = userEvent.setup();
     render(<TaskDetail task={baseTask} columnId="col-1" />);
-    const linkInput = screen.getByPlaceholderText(/Paste link/);
+    const addInput = screen.getByPlaceholderText(/Paste GitHub/);
 
-    await user.type(linkInput, "https://jira.example.com/issue-123");
+    await user.type(addInput, "https://jira.example.com/issue-123");
     await user.click(document.body);
 
-    expect(useBoardStore.getState().board.columns[0].tasks[0].githubUrl).toBe(
-      "https://jira.example.com/issue-123"
-    );
+    const links = useBoardStore.getState().board.columns[0].tasks[0].links ?? [];
+    expect(links.map((l) => l.url)).toContain("https://jira.example.com/issue-123");
+  });
+
+  it("removes a link when its X button is clicked", async () => {
+    const user = userEvent.setup();
+    const taskWithLinks: Task = {
+      ...baseTask,
+      links: [{ id: "l1", url: "https://example.com/doomed" }],
+    };
+    useBoardStore.setState((s) => ({
+      board: {
+        ...s.board,
+        columns: s.board.columns.map((c) => ({
+          ...c,
+          tasks: c.tasks.map((t) => (t.id === baseTask.id ? taskWithLinks : t)),
+        })),
+      },
+    }));
+    render(<TaskDetail task={taskWithLinks} columnId="col-1" />);
+
+    await user.click(screen.getByLabelText("Remove link"));
+    const links = useBoardStore.getState().board.columns[0].tasks[0].links ?? [];
+    expect(links).toHaveLength(0);
   });
 });

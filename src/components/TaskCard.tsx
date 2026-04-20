@@ -15,13 +15,14 @@ type TaskCardProps = {
 };
 
 export default function TaskCard({ task, columnId }: TaskCardProps) {
-  const [expanded, setExpanded] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const cycleTaskStatus = useBoardStore((s) => s.cycleTaskStatus);
   const updateTask = useBoardStore((s) => s.updateTask);
   const deleteTask = useBoardStore((s) => s.deleteTask);
+  const expanded = useBoardStore((s) => s.expandedTaskId === task.id);
+  const setExpandedTaskId = useBoardStore((s) => s.setExpandedTaskId);
 
   useEffect(() => {
     if (isRenaming) renameInputRef.current?.focus();
@@ -60,7 +61,7 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
       target.closest("textarea")
     )
       return;
-    setExpanded(!expanded);
+    setExpandedTaskId(expanded ? null : task.id);
   };
 
   return (

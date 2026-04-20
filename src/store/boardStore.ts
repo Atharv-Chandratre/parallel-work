@@ -6,8 +6,10 @@ import { storage } from "@/lib/storage";
 type BoardState = {
   board: Board;
   initialized: boolean;
+  expandedTaskId: string | null;
 
   initialize: () => Promise<void>;
+  setExpandedTaskId: (taskId: string | null) => void;
 
   addColumn: (title: string) => void;
   renameColumn: (columnId: string, title: string) => void;
@@ -76,6 +78,7 @@ function migrateBoard(board: Board): Board {
 export const useBoardStore = create<BoardState>((set, get) => ({
   board: createDefaultBoard(),
   initialized: false,
+  expandedTaskId: null,
 
   initialize: async () => {
     const saved = await storage.loadBoard();
@@ -85,6 +88,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       initialized: true,
     });
   },
+
+  setExpandedTaskId: (taskId) => set({ expandedTaskId: taskId }),
 
   addColumn: (title: string) => {
     set((state) => {

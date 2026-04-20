@@ -82,6 +82,8 @@ function TaskCard({ task, columnId }: TaskCardProps) {
           <div
             {...attributes}
             {...listeners}
+            role="button"
+            aria-label={`Drag task: ${task.title}`}
             className="mt-0.5 cursor-grab rounded p-0.5 text-zinc-400 dark:text-zinc-600 opacity-0 group-hover:opacity-100 hover:text-zinc-500 dark:hover:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 active:cursor-grabbing transition-all shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
@@ -146,6 +148,7 @@ function TaskCard({ task, columnId }: TaskCardProps) {
               onClick={() => deleteTask(columnId, task.id)}
               className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 transition-all cursor-pointer"
               title="Delete task"
+              aria-label={`Delete task: ${task.title}`}
             >
               <svg
                 width="14"
@@ -169,6 +172,7 @@ function TaskCard({ task, columnId }: TaskCardProps) {
               aria-disabled={task.status === "todo"}
               className={`flex items-center justify-center w-5 h-5 rounded disabled:opacity-100 ${task.status === "todo" ? "text-zinc-400 dark:text-zinc-500 cursor-not-allowed" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer"}`}
               title="Previous status"
+              aria-label={`Move task to previous status: ${task.title}`}
             >
               <svg
                 width="10"
@@ -190,6 +194,7 @@ function TaskCard({ task, columnId }: TaskCardProps) {
               aria-disabled={task.status === "done"}
               className={`flex items-center justify-center w-5 h-5 rounded disabled:opacity-100 ${task.status === "done" ? "text-zinc-400 dark:text-zinc-500 cursor-not-allowed" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer"}`}
               title="Next status"
+              aria-label={`Move task to next status: ${task.title}`}
             >
               <svg
                 width="10"

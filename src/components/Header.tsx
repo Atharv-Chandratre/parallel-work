@@ -125,6 +125,7 @@ export default function Header() {
           className={btnClass}
           data-tooltip="Export"
           title="Export board as JSON"
+          aria-label="Export board as JSON"
         >
           <svg
             width="16"
@@ -147,6 +148,7 @@ export default function Header() {
           className={btnClass}
           data-tooltip="Import"
           title="Import board from JSON"
+          aria-label="Import board from JSON"
         >
           <svg
             width="16"
@@ -177,6 +179,8 @@ export default function Header() {
           className={btnClass}
           data-tooltip={dark ? "Light mode" : "Dark mode"}
           title={dark ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+          aria-pressed={dark}
         >
           {dark ? (
             <svg

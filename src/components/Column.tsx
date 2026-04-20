@@ -150,6 +150,9 @@ export default function Column({ column }: ColumnProps) {
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="rounded-md p-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+            aria-label={`Project "${column.title}" menu`}
+            aria-haspopup="menu"
+            aria-expanded={showMenu}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <circle cx="12" cy="5" r="2" />
@@ -223,6 +226,7 @@ export default function Column({ column }: ColumnProps) {
               <button
                 onClick={() => setConfirmAction("clearDone")}
                 title="Clear done tasks"
+                aria-label={`Clear done tasks in "${column.title}"`}
                 className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:text-red-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
               >
                 Clear

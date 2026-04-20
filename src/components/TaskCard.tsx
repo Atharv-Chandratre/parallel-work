@@ -69,6 +69,7 @@ export default function TaskCard({ task, columnId }: TaskCardProps) {
       ref={setNodeRef}
       style={style}
       onClick={handleCardClick}
+      data-task-card
       className={`group rounded-lg border border-[var(--color-card-border)] bg-[var(--color-card-bg)] transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${isDragging ? "opacity-50 shadow-lg" : ""}`}
     >
       <div className="flex items-start gap-2 p-3">

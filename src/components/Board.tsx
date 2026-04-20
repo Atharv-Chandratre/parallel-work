@@ -19,10 +19,22 @@ import EmptyState from "./EmptyState";
 export default function Board() {
   const { board, initialized, initialize, reorderTask, moveTaskBetweenColumns, moveColumn } =
     useBoardStore();
+  const setExpandedTaskId = useBoardStore((s) => s.setExpandedTaskId);
 
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  useEffect(() => {
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target?.closest("[data-task-card]")) {
+        setExpandedTaskId(null);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [setExpandedTaskId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

@@ -8,11 +8,15 @@ type BoardState = {
   board: Board;
   initialized: boolean;
   expandedTaskId: string | null;
+  undoCount: number;
+  redoCount: number;
 
   initialize: () => Promise<void>;
   setExpandedTaskId: (taskId: string | null) => void;
   flushPendingSave: () => void;
   hydrateFromStorage: (board: Board) => void;
+  undo: () => void;
+  redo: () => void;
 
   addColumn: (title: string) => void;
   renameColumn: (columnId: string, title: string) => void;
@@ -114,10 +118,22 @@ function migrateBoard(board: Board): Board {
   };
 }
 
+const undoStack: Board[] = [];
+const redoStack: Board[] = [];
+const MAX_HISTORY = 30;
+let suppressHistory = false;
+
+export function _resetHistoryForTests() {
+  undoStack.length = 0;
+  redoStack.length = 0;
+}
+
 export const useBoardStore = create<BoardState>((set, get) => ({
   board: createDefaultBoard(),
   initialized: false,
   expandedTaskId: null,
+  undoCount: 0,
+  redoCount: 0,
 
   initialize: async () => {
     const saved = await storage.loadBoard();
@@ -142,7 +158,33 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   hydrateFromStorage: (board: Board) => {
     // Update state without triggering a persist write (prevents cross-tab loop).
+    suppressHistory = true;
     set({ board: migrateBoard(board) });
+    suppressHistory = false;
+  },
+
+  undo: () => {
+    const prev = undoStack.pop();
+    if (!prev) return;
+    const current = get().board;
+    redoStack.push(current);
+    if (redoStack.length > MAX_HISTORY) redoStack.shift();
+    suppressHistory = true;
+    set({ board: prev, undoCount: undoStack.length, redoCount: redoStack.length });
+    suppressHistory = false;
+    persist(prev);
+  },
+
+  redo: () => {
+    const next = redoStack.pop();
+    if (!next) return;
+    const current = get().board;
+    undoStack.push(current);
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    suppressHistory = true;
+    set({ board: next, undoCount: undoStack.length, redoCount: redoStack.length });
+    suppressHistory = false;
+    persist(next);
   },
 
   addColumn: (title: string) => {
@@ -437,3 +479,18 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     persist(migrated);
   },
 }));
+
+// History capture: push the previous board onto the undo stack whenever
+// the board ref changes (and we're not in an undo/redo/hydrate op).
+useBoardStore.subscribe((state, prev) => {
+  if (suppressHistory) return;
+  if (!prev.initialized) return;
+  if (state.board === prev.board) return;
+  undoStack.push(prev.board);
+  if (undoStack.length > MAX_HISTORY) undoStack.shift();
+  redoStack.length = 0;
+  // Reflect new counts into state so UI can show availability.
+  suppressHistory = true;
+  useBoardStore.setState({ undoCount: undoStack.length, redoCount: 0 });
+  suppressHistory = false;
+});

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { useBoardStore } from "@/store/boardStore";
+import { useBoardStore, _resetHistoryForTests } from "@/store/boardStore";
 import { Board, COLUMN_COLORS, Task } from "@/lib/types";
 
 vi.mock("@/lib/storage", () => ({
@@ -430,6 +430,54 @@ describe("boardStore", () => {
       expect(tasks[1].status).toBe("queued");
       expect(tasks[2].status).toBe("in-review");
       expect(tasks[3].status).toBe("done");
+    });
+  });
+
+  describe("Undo / redo", () => {
+    beforeEach(() => {
+      _resetHistoryForTests();
+      // Mark initialized so the history subscriber records changes.
+      useBoardStore.setState({
+        board: { id: "board-1", columns: [] },
+        initialized: true,
+        undoCount: 0,
+        redoCount: 0,
+      });
+    });
+
+    it("undo restores the previous board state", () => {
+      getState().addColumn("A");
+      expect(getState().board.columns).toHaveLength(1);
+      getState().undo();
+      expect(getState().board.columns).toHaveLength(0);
+    });
+
+    it("redo re-applies an undone change", () => {
+      getState().addColumn("A");
+      getState().undo();
+      expect(getState().board.columns).toHaveLength(0);
+      getState().redo();
+      expect(getState().board.columns).toHaveLength(1);
+      expect(getState().board.columns[0].title).toBe("A");
+    });
+
+    it("a new mutation after undo clears the redo stack", () => {
+      getState().addColumn("A");
+      getState().addColumn("B");
+      getState().undo();
+      expect(getState().redoCount).toBe(1);
+      getState().addColumn("C");
+      expect(getState().redoCount).toBe(0);
+      // redo now does nothing
+      getState().redo();
+      const titles = getState().board.columns.map((c) => c.title);
+      expect(titles).toEqual(["A", "C"]);
+    });
+
+    it("undo is a no-op with no history", () => {
+      const before = getState().board;
+      getState().undo();
+      expect(getState().board).toBe(before);
     });
   });
 });

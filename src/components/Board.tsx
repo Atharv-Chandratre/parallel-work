@@ -23,6 +23,8 @@ export default function Board() {
   const setExpandedTaskId = useBoardStore((s) => s.setExpandedTaskId);
   const flushPendingSave = useBoardStore((s) => s.flushPendingSave);
   const hydrateFromStorage = useBoardStore((s) => s.hydrateFromStorage);
+  const undo = useBoardStore((s) => s.undo);
+  const redo = useBoardStore((s) => s.redo);
 
   useEffect(() => {
     initialize();
@@ -55,6 +57,26 @@ export default function Board() {
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [flushPendingSave]);
+
+  // Global undo/redo shortcuts. Skip when focus is in an editable field
+  // so Cmd-Z inside an input is the browser's own undo.
+  useEffect(() => {
+    const isEditable = (el: EventTarget | null) => {
+      if (!(el instanceof HTMLElement)) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || el.isContentEditable;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      if (e.key.toLowerCase() !== "z") return;
+      if (isEditable(e.target)) return;
+      e.preventDefault();
+      if (e.shiftKey) redo();
+      else undo();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [undo, redo]);
 
   // Cross-tab sync: another tab wrote to localStorage, mirror it here.
   useEffect(() => {

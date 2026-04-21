@@ -24,7 +24,6 @@ function validateBoard(data: unknown): data is Board {
 }
 
 export default function Header() {
-  const columns = useBoardStore((s) => s.board.columns);
   const exportBoard = useBoardStore((s) => s.exportBoard);
   const importBoard = useBoardStore((s) => s.importBoard);
   const openCommandPalette = useUiStore((s) => s.openCommandPalette);
@@ -86,11 +85,6 @@ export default function Header() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const allTasks = columns.flatMap((c) => c.tasks);
-  const queued = allTasks.filter((t) => t.status === "queued").length;
-  const inReview = allTasks.filter((t) => t.status === "in-review").length;
-  const todo = allTasks.filter((t) => t.status === "todo").length;
-
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const setSearchQuery = useFilterStore((s) => s.setSearchQuery);
   const statusFilters = useFilterStore((s) => s.statusFilters);
@@ -99,6 +93,19 @@ export default function Header() {
   const toggleLinkTypeFilter = useFilterStore((s) => s.toggleLinkTypeFilter);
   const clearFilters = useFilterStore((s) => s.clearFilters);
   const filterActive = useFilterStore((s) => isFilterActive(s));
+  const activeFilterCount = statusFilters.length + linkTypeFilters.length;
+
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersPopoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (!filtersPopoverRef.current?.contains(e.target as Node)) setFiltersOpen(false);
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [filtersOpen]);
 
   const STATUS_CHIPS: TaskStatus[] = ["todo", "queued", "in-review", "done"];
   const LINK_CHIPS: { kind: LinkType; label: string }[] = [
@@ -125,40 +132,6 @@ export default function Header() {
           </h1>
         </div>
         <BoardPicker />
-        <button
-          type="button"
-          onClick={openCommandPalette}
-          title="Open command palette"
-          aria-label="Open command palette"
-          className="hidden sm:inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-        >
-          {pill.keys.map((k, i) => (
-            <span key={i} className="flex items-center gap-1">
-              {i > 0 && <span className="text-zinc-400">+</span>}
-              <span>{k}</span>
-            </span>
-          ))}
-        </button>
-        <div className="hidden sm:flex items-center gap-2 text-xs">
-          {queued > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-yellow-500 font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-yellow-500 animate-pulse" />
-              {queued} queued
-            </span>
-          )}
-          {inReview > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-blue-400 font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-              {inReview} in review
-            </span>
-          )}
-          {todo > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-500/10 px-2.5 py-0.5 text-zinc-500 dark:text-zinc-400 font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
-              {todo} to do
-            </span>
-          )}
-        </div>
       </div>
 
       <div className="hidden md:flex flex-1 items-center justify-center gap-2 px-4">
@@ -182,62 +155,138 @@ export default function Header() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search tasks..."
             aria-label="Search tasks"
-            className="w-full rounded-lg border border-[var(--color-card-border)] bg-[var(--color-card-bg)] py-1 pl-7 pr-2 text-xs text-zinc-700 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all"
+            className="w-full rounded-lg border border-[var(--color-card-border)] bg-[var(--color-card-bg)] py-1 pl-7 pr-14 text-xs text-zinc-700 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all"
           />
-        </div>
-        <div className="flex items-center gap-1" role="group" aria-label="Status filters">
-          {STATUS_CHIPS.map((status) => {
-            const active = statusFilters.includes(status);
-            const cfg = STATUS_CONFIG[status];
-            return (
-              <button
-                key={status}
-                onClick={() => toggleStatusFilter(status)}
-                aria-pressed={active}
-                className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
-                  active
-                    ? "text-white"
-                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-                }`}
-                style={active ? { backgroundColor: cfg.color } : undefined}
-              >
-                {cfg.label}
-              </button>
-            );
-          })}
-        </div>
-        <div
-          className="hidden lg:flex items-center gap-1"
-          role="group"
-          aria-label="Link type filters"
-        >
-          {LINK_CHIPS.map(({ kind, label }) => {
-            const active = linkTypeFilters.includes(kind);
-            return (
-              <button
-                key={kind}
-                onClick={() => toggleLinkTypeFilter(kind)}
-                aria-pressed={active}
-                className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
-                  active
-                    ? "bg-blue-500 text-white"
-                    : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-        {filterActive && (
           <button
-            onClick={clearFilters}
-            aria-label="Clear all filters"
-            className="rounded-full px-2 py-0.5 text-[10px] font-medium text-zinc-500 hover:text-red-400 transition-colors cursor-pointer"
+            type="button"
+            onClick={openCommandPalette}
+            title="Open command palette"
+            aria-label="Open command palette"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-0.5 rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
           >
-            Clear
+            {pill.keys.map((k, i) => (
+              <span key={i} className="flex items-center gap-0.5">
+                {i > 0 && <span className="text-zinc-400">+</span>}
+                <span>{k}</span>
+              </span>
+            ))}
           </button>
-        )}
+        </div>
+        <div className="relative" ref={filtersPopoverRef}>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((o) => !o)}
+            aria-haspopup="menu"
+            aria-expanded={filtersOpen}
+            aria-label={activeFilterCount > 0 ? `Filters (${activeFilterCount} active)` : "Filters"}
+            className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors cursor-pointer ${
+              filterActive
+                ? "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                : "border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+            }`}
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+            <span>Filters</span>
+            {activeFilterCount > 0 && (
+              <span
+                aria-hidden="true"
+                className="inline-flex min-w-[1rem] items-center justify-center rounded-full bg-blue-500 px-1 text-[9px] font-semibold text-white"
+              >
+                {activeFilterCount}
+              </span>
+            )}
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+          {filtersOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 top-full z-40 mt-1 w-64 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 shadow-xl"
+            >
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                Status
+              </div>
+              <div className="mb-3 flex flex-wrap gap-1" role="group" aria-label="Status filters">
+                {STATUS_CHIPS.map((status) => {
+                  const active = statusFilters.includes(status);
+                  const cfg = STATUS_CONFIG[status];
+                  return (
+                    <button
+                      key={status}
+                      onClick={() => toggleStatusFilter(status)}
+                      aria-pressed={active}
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                        active
+                          ? "text-white"
+                          : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                      }`}
+                      style={active ? { backgroundColor: cfg.color } : undefined}
+                    >
+                      {cfg.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                Link type
+              </div>
+              <div
+                className="mb-3 flex flex-wrap gap-1"
+                role="group"
+                aria-label="Link type filters"
+              >
+                {LINK_CHIPS.map(({ kind, label }) => {
+                  const active = linkTypeFilters.includes(kind);
+                  return (
+                    <button
+                      key={kind}
+                      onClick={() => toggleLinkTypeFilter(kind)}
+                      aria-pressed={active}
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                        active
+                          ? "bg-blue-500 text-white"
+                          : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={clearFilters}
+                  aria-label="Clear all filters"
+                  disabled={!filterActive}
+                  className="rounded-md px-2 py-0.5 text-[10px] font-medium text-zinc-500 hover:text-red-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-1">

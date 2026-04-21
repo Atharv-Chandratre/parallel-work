@@ -29,67 +29,27 @@ describe("Header", () => {
     expect(screen.getByText("Parallel")).toBeInTheDocument();
   });
 
-  it("shows task counters when tasks exist", () => {
-    useBoardStore.setState({
-      board: {
-        id: "board-1",
-        columns: [
-          {
-            id: "col-1",
-            title: "Test",
-            color: "#000",
-            order: 0,
-            tasks: [
-              {
-                id: "t1",
-                title: "A",
-                status: "queued",
-                notes: "",
-                order: 0,
-                createdAt: 1000,
-              },
-              {
-                id: "t2",
-                title: "B",
-                status: "queued",
-                notes: "",
-                order: 1,
-                createdAt: 1000,
-              },
-              {
-                id: "t3",
-                title: "C",
-                status: "in-review",
-                notes: "",
-                order: 2,
-                createdAt: 1000,
-              },
-              {
-                id: "t4",
-                title: "D",
-                status: "todo",
-                notes: "",
-                order: 3,
-                createdAt: 1000,
-              },
-            ],
-          },
-        ],
-      },
-      initialized: true,
-    });
-
+  it("Filters popover is closed by default and shows the filter chip groups when opened", async () => {
+    const user = userEvent.setup();
     render(<Header />);
-    expect(screen.getByText("2 queued")).toBeInTheDocument();
-    expect(screen.getByText("1 in review")).toBeInTheDocument();
-    expect(screen.getByText("1 to do")).toBeInTheDocument();
+    // Chips live inside the popover — not in the DOM until opened.
+    expect(screen.queryByRole("button", { name: /^In Review$/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^Filters$/ }));
+    expect(screen.getByRole("button", { name: /^In Review$/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^GitHub$/ })).toBeInTheDocument();
   });
 
-  it("does not show counters when there are no tasks of that status", () => {
+  it("Filters button shows an active count badge when filters are applied", async () => {
+    const { useFilterStore } = await import("@/store/filterStore");
+    useFilterStore.setState({
+      searchQuery: "",
+      statusFilters: ["queued", "in-review"],
+      linkTypeFilters: ["github"],
+    });
     render(<Header />);
-    expect(screen.queryByText(/queued/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/in review/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/to do/)).not.toBeInTheDocument();
+    const btn = screen.getByRole("button", { name: /Filters \(3 active\)/ });
+    expect(btn.textContent).toContain("3");
+    useFilterStore.setState({ searchQuery: "", statusFilters: [], linkTypeFilters: [] });
   });
 
   it("dark mode toggle works", async () => {

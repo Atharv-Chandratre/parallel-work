@@ -343,11 +343,12 @@ test.describe("Task management", () => {
   test("status filter chip narrows visible tasks; Clear resets", async ({ page }) => {
     await addTask(page, "Only Task");
 
-    // Activate the "In Review" chip; the (todo) task should disappear.
+    // Open the Filters popover and click the "In Review" chip.
+    await page.getByRole("button", { name: /^Filters$/ }).click();
     await page.getByRole("button", { name: /^In Review$/ }).click();
     await expect(page.getByText("Only Task")).not.toBeVisible();
 
-    // Clear filters restores the task.
+    // Clear filters inside the popover restores the task.
     await page.getByRole("button", { name: /Clear all filters/i }).click();
     await expect(page.getByText("Only Task")).toBeVisible();
   });

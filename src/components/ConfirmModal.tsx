@@ -72,10 +72,7 @@ export default function ConfirmModal({
         className="w-80 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3
-          id={titleId}
-          className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 mb-2"
-        >
+        <h3 id={titleId} className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 mb-2">
           {title}
         </h3>
         <p id={messageId} className="text-xs text-zinc-600 dark:text-zinc-400 mb-5">

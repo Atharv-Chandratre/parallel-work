@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import CommandPalette from "@/components/CommandPalette";
 import { useBoardStore } from "@/store/boardStore";
 import { useFilterStore } from "@/store/filterStore";
+import { useUiStore } from "@/store/uiStore";
 
 vi.mock("@/lib/storage", () => ({
   STORAGE_KEY: "parallel-boards",
@@ -91,5 +92,16 @@ describe("CommandPalette", () => {
     const labels = options.map((o) => o.textContent ?? "");
     expect(labels.some((l) => l.includes("Jump to: Alpha"))).toBe(true);
     expect(labels.some((l) => l.includes("Jump to: Beta"))).toBe(true);
+  });
+
+  it('running "Keyboard shortcuts" opens the shortcuts dialog via uiStore', async () => {
+    useUiStore.setState({ isShortcutsOpen: false, isCommandPaletteOpen: true });
+    const user = userEvent.setup();
+    render(<CommandPalette onClose={() => {}} />);
+    await user.type(screen.getByRole("textbox", { name: "Command" }), "keyboard shortcuts");
+    await user.keyboard("{Enter}");
+    // run() is deferred via setTimeout(0)
+    await new Promise((r) => setTimeout(r, 20));
+    expect(useUiStore.getState().isShortcutsOpen).toBe(true);
   });
 });

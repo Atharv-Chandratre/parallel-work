@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Header from "@/components/Header";
 import { useBoardStore } from "@/store/boardStore";
+import { useUiStore } from "@/store/uiStore";
 
 vi.mock("@/lib/storage", () => ({
   STORAGE_KEY: "parallel-boards",
@@ -19,6 +20,7 @@ describe("Header", () => {
       board: { id: "board-1", columns: [] },
       initialized: true,
     });
+    useUiStore.setState({ isShortcutsOpen: false, isCommandPaletteOpen: false });
     localStorage.clear();
   });
 
@@ -101,5 +103,19 @@ describe("Header", () => {
     // After clicking, dark mode state should toggle
     const newTitle = toggleBtn.getAttribute("title");
     expect(newTitle).toMatch(/Switch to/);
+  });
+
+  it("keyboard-shortcuts button opens the shortcuts dialog via uiStore", async () => {
+    const user = userEvent.setup();
+    render(<Header />);
+    await user.click(screen.getByLabelText("Keyboard shortcuts"));
+    expect(useUiStore.getState().isShortcutsOpen).toBe(true);
+  });
+
+  it("⌘K pill opens the command palette via uiStore", async () => {
+    const user = userEvent.setup();
+    render(<Header />);
+    await user.click(screen.getByLabelText("Open command palette"));
+    expect(useUiStore.getState().isCommandPaletteOpen).toBe(true);
   });
 });

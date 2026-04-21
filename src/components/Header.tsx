@@ -3,8 +3,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useBoardStore } from "@/store/boardStore";
 import { useFilterStore, isFilterActive } from "@/store/filterStore";
+import { useUiStore } from "@/store/uiStore";
 import { Board, STATUS_CONFIG, TaskStatus } from "@/lib/types";
 import type { LinkType } from "@/lib/linkUtils";
+import { formatShortcutForPill } from "@/lib/shortcuts";
+import { useIsMac } from "@/lib/useIsMac";
 import BoardPicker from "./BoardPicker";
 
 function validateBoard(data: unknown): data is Board {
@@ -24,6 +27,10 @@ export default function Header() {
   const columns = useBoardStore((s) => s.board.columns);
   const exportBoard = useBoardStore((s) => s.exportBoard);
   const importBoard = useBoardStore((s) => s.importBoard);
+  const openCommandPalette = useUiStore((s) => s.openCommandPalette);
+  const openShortcuts = useUiStore((s) => s.openShortcuts);
+  const isMac = useIsMac();
+  const pill = formatShortcutForPill(isMac);
   const [dark, setDark] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -118,6 +125,20 @@ export default function Header() {
           </h1>
         </div>
         <BoardPicker />
+        <button
+          type="button"
+          onClick={openCommandPalette}
+          title="Open command palette"
+          aria-label="Open command palette"
+          className="hidden sm:inline-flex items-center gap-1 rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+        >
+          {pill.keys.map((k, i) => (
+            <span key={i} className="flex items-center gap-1">
+              {i > 0 && <span className="text-zinc-400">+</span>}
+              <span>{k}</span>
+            </span>
+          ))}
+        </button>
         <div className="hidden sm:flex items-center gap-2 text-xs">
           {queued > 0 && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-yellow-500 font-medium">
@@ -220,6 +241,27 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-1">
+        <button
+          onClick={openShortcuts}
+          className={btnClass}
+          title="Keyboard shortcuts (?)"
+          aria-label="Keyboard shortcuts"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="2" y="6" width="20" height="12" rx="2" />
+            <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M10 14h.01M14 14h4" />
+          </svg>
+        </button>
         <button
           onClick={handleExport}
           className={btnClass}

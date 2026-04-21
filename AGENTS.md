@@ -39,10 +39,13 @@ src/
     types.ts                 # Task, TaskLink, Column, Board, BoardsCollection, STATUS_CONFIG, COLUMN_COLORS
     storage.ts               # loadBoards / saveBoards / saveBoardsSync + legacy-key migration
     linkUtils.ts             # getLinkType(url) → "github"|"slack"|"decision-systems"|"jira"|"generic"
+    shortcuts.ts             # canonical keyboard-shortcut list rendered by ShortcutsHelp
+    useIsMac.ts              # hook returning true on macOS (post-hydration)
   store/
     boardStore.ts            # persisted, undo/redo, multi-board
     filterStore.ts           # ephemeral: searchQuery, statusFilters, linkTypeFilters
     toastStore.ts            # ephemeral, auto-dismiss 5s
+    uiStore.ts               # ephemeral: isShortcutsOpen, isCommandPaletteOpen
   test/
     setup.ts                 # Node 25 + jsdom localStorage polyfill — load-bearing (see Gotchas)
 e2e/
@@ -94,6 +97,12 @@ If you change a dependency, CI will detect on `npm ci`. If you edit Playwright t
 ### `toastStore` — ephemeral
 
 - `push(message, kind)`, 5 s auto-dismiss. Use for surfacing persistence failures, not for success confirmations.
+
+### `uiStore` — ephemeral
+
+- `isShortcutsOpen`, `isCommandPaletteOpen` + open/close/toggle actions. The `?` key (in `Board.tsx`), the header keyboard button, and the "Keyboard shortcuts" command-palette entry all flip `isShortcutsOpen`. The `⌘K` header pill and the global `⌘K` binding flip `isCommandPaletteOpen`. `<ShortcutsHelp />` mounts in `src/app/page.tsx` and reads from `uiStore`; `<CommandPalette />` mounts from `Board.tsx` when `isCommandPaletteOpen` is true.
+
+**When adding a new keyboard shortcut:** (a) wire the binding in `Board.tsx`'s key handler (or the relevant component), and (b) register it in `src/lib/shortcuts.ts` so it shows up in the help dialog. The two must stay in sync.
 
 ## Storage model
 

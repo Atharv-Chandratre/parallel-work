@@ -296,6 +296,36 @@ test.describe("Task management", () => {
     await expect(palette).not.toBeVisible();
   });
 
+  test("`?` opens the shortcuts help dialog; Esc closes it", async ({ page }) => {
+    // Make sure focus is not on an input (clearBoard leaves focus somewhere benign).
+    await page.getByRole("heading", { name: "Test Project" }).first().click();
+    await page.keyboard.press("Shift+Slash"); // produces "?" on US layouts
+
+    const dialog = page.getByRole("dialog", { name: "Keyboard shortcuts" });
+    await expect(dialog).toBeVisible();
+
+    // A shortcut entry is rendered (e.g. global heading).
+    await expect(dialog.getByText("Global")).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+  });
+
+  test("the visible ⌘K header pill opens the command palette", async ({ page }) => {
+    await page.getByLabel("Open command palette").first().click();
+    await expect(page.getByRole("dialog", { name: "Command palette" })).toBeVisible();
+  });
+
+  test('the palette\'s "Keyboard shortcuts" command opens the help dialog', async ({ page }) => {
+    const modifier = process.platform === "darwin" ? "Meta" : "Control";
+    await page.keyboard.press(`${modifier}+k`);
+    const palette = page.getByRole("dialog", { name: "Command palette" });
+    await expect(palette).toBeVisible();
+    await palette.getByRole("textbox", { name: "Command" }).fill("keyboard shortcuts");
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("dialog", { name: "Keyboard shortcuts" })).toBeVisible();
+  });
+
   test("header search filters tasks across columns", async ({ page }) => {
     await addTask(page, "Buy coffee");
     await addTask(page, "Write report");

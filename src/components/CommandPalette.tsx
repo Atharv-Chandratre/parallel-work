@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useBoardStore } from "@/store/boardStore";
 import { useFilterStore } from "@/store/filterStore";
+import { useUiStore } from "@/store/uiStore";
 
 export type Command = {
   id: string;
@@ -82,6 +83,13 @@ function buildCommands(): Command[] {
         a.click();
         URL.revokeObjectURL(url);
       },
+    },
+    {
+      id: "keyboard-shortcuts",
+      label: "Keyboard shortcuts",
+      hint: "?",
+      category: "Help",
+      run: () => useUiStore.getState().openShortcuts(),
     },
   ];
 

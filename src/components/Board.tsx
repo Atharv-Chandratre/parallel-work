@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import CommandPalette from "./CommandPalette";
+import { useUiStore } from "@/store/uiStore";
 import {
   DndContext,
   DragEndEvent,
@@ -26,7 +27,10 @@ export default function Board() {
   const hydrateFromStorage = useBoardStore((s) => s.hydrateFromStorage);
   const undo = useBoardStore((s) => s.undo);
   const redo = useBoardStore((s) => s.redo);
-  const [paletteOpen, setPaletteOpen] = useState(false);
+  const paletteOpen = useUiStore((s) => s.isCommandPaletteOpen);
+  const toggleCommandPalette = useUiStore((s) => s.toggleCommandPalette);
+  const closeCommandPalette = useUiStore((s) => s.closeCommandPalette);
+  const openShortcuts = useUiStore((s) => s.openShortcuts);
 
   useEffect(() => {
     initialize();
@@ -73,7 +77,7 @@ export default function Board() {
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setPaletteOpen((o) => !o);
+        toggleCommandPalette();
         return;
       }
       if (mod && e.key.toLowerCase() === "z") {
@@ -81,11 +85,18 @@ export default function Board() {
         e.preventDefault();
         if (e.shiftKey) redo();
         else undo();
+        return;
+      }
+      // `?` opens the keyboard shortcuts help. Skip when typing in inputs so
+      // `Shift+/` in a notes textarea still produces a literal `?`.
+      if (e.key === "?" && !isEditable(e.target)) {
+        e.preventDefault();
+        openShortcuts();
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [undo, redo]);
+  }, [undo, redo, toggleCommandPalette, openShortcuts]);
 
   // Cross-tab sync: another tab wrote to localStorage, mirror it here.
   useEffect(() => {
@@ -203,7 +214,7 @@ export default function Board() {
           <EmptyState />
           <AddColumn compact />
         </div>
-        {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
+        {paletteOpen && <CommandPalette onClose={closeCommandPalette} />}
       </>
     );
   }
@@ -227,7 +238,7 @@ export default function Board() {
           </div>
         </SortableContext>
       </DndContext>
-      {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
+      {paletteOpen && <CommandPalette onClose={closeCommandPalette} />}
     </>
   );
 }

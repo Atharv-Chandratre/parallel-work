@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, act, waitFor } from "@testing-library/react";
 import Board from "@/components/Board";
 import { useBoardStore } from "@/store/boardStore";
+import { useUiStore } from "@/store/uiStore";
 
 vi.mock("@/lib/storage", () => ({
   STORAGE_KEY: "parallel-boards",
@@ -20,6 +21,7 @@ describe("Board", () => {
       initialized: false,
       expandedTaskId: null,
     });
+    useUiStore.setState({ isShortcutsOpen: false, isCommandPaletteOpen: false });
   });
 
   afterEach(() => {
@@ -54,6 +56,50 @@ describe("Board", () => {
     render(<Board />);
     expect(screen.getByText("Alpha")).toBeInTheDocument();
     expect(screen.getByText("Beta")).toBeInTheDocument();
+  });
+
+  it("pressing `?` opens the shortcuts help", () => {
+    useBoardStore.setState({ initialized: true });
+    render(<Board />);
+    expect(useUiStore.getState().isShortcutsOpen).toBe(false);
+    act(() => {
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "?", bubbles: true, cancelable: true })
+      );
+    });
+    expect(useUiStore.getState().isShortcutsOpen).toBe(true);
+  });
+
+  it("pressing `?` while an input is focused does NOT open shortcuts help", () => {
+    useBoardStore.setState({ initialized: true });
+    render(<Board />);
+    const input = document.createElement("input");
+    document.body.appendChild(input);
+    input.focus();
+    act(() => {
+      input.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "?", bubbles: true, cancelable: true })
+      );
+    });
+    expect(useUiStore.getState().isShortcutsOpen).toBe(false);
+    input.remove();
+  });
+
+  it("Cmd/Ctrl+K toggles the command palette via uiStore", () => {
+    useBoardStore.setState({ initialized: true });
+    render(<Board />);
+    act(() => {
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true, cancelable: true })
+      );
+    });
+    expect(useUiStore.getState().isCommandPaletteOpen).toBe(true);
+    act(() => {
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true, cancelable: true })
+      );
+    });
+    expect(useUiStore.getState().isCommandPaletteOpen).toBe(false);
   });
 
   it("clears expanded task on document pointerdown outside a card", () => {

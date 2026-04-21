@@ -13,6 +13,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Stale repo copies left by the auto-claude worktree tooling. Not part
+    // of our source; CI never sees them but local `npm run lint` does.
+    ".auto-claude/**",
+    // Playwright artifacts.
+    "playwright-report/**",
+    "test-results/**",
   ]),
   prettierConfig,
 ]);

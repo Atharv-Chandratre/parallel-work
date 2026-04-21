@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useBoardStore } from "@/store/boardStore";
+import { fetchLinkTitle, looksLikeUrl } from "@/lib/linkTitle";
 
 type AddTaskProps = {
   columnId: string;
@@ -12,6 +13,8 @@ export default function AddTask({ columnId }: AddTaskProps) {
   const [title, setTitle] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const addTask = useBoardStore((s) => s.addTask);
+  const addTaskFromLink = useBoardStore((s) => s.addTaskFromLink);
+  const updateTask = useBoardStore((s) => s.updateTask);
 
   useEffect(() => {
     if (isAdding) inputRef.current?.focus();
@@ -19,11 +22,21 @@ export default function AddTask({ columnId }: AddTaskProps) {
 
   const handleSubmit = () => {
     const trimmed = title.trim();
-    if (trimmed) {
-      addTask(columnId, trimmed);
+    if (!trimmed) return;
+    // If the user typed a bare URL, create the task with that URL as its
+    // first link and fetch the page title asynchronously.
+    if (looksLikeUrl(trimmed)) {
+      const taskId = addTaskFromLink(columnId, trimmed);
       setTitle("");
       inputRef.current?.focus();
+      void fetchLinkTitle(trimmed).then((fetchedTitle) => {
+        if (fetchedTitle) updateTask(columnId, taskId, { title: fetchedTitle });
+      });
+      return;
     }
+    addTask(columnId, trimmed);
+    setTitle("");
+    inputRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -59,7 +72,7 @@ export default function AddTask({ columnId }: AddTaskProps) {
         onBlur={() => {
           if (!title.trim()) setIsAdding(false);
         }}
-        placeholder="Task title..."
+        placeholder="Task title or paste a link..."
         className="w-full min-h-0 px-2 py-1.5 bg-transparent text-sm leading-normal text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-inset"
       />
       <div className="mt-2 flex gap-2">

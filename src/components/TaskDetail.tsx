@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Task } from "@/lib/types";
 import { useBoardStore } from "@/store/boardStore";
+import { fetchLinkTitle } from "@/lib/linkTitle";
 import LinkIcon from "./LinkIcon";
 
 type TaskDetailProps = {
@@ -27,17 +28,6 @@ function formatElapsed(startTs: number): string {
   const hours = Math.floor(minutes / 60);
   if (hours > 0) return `${hours}h ${minutes % 60}m`;
   return `${minutes}m`;
-}
-
-async function fetchLinkTitle(url: string): Promise<string | null> {
-  try {
-    const res = await fetch(`/api/link-title?url=${encodeURIComponent(url)}`);
-    if (!res.ok) return null;
-    const data = (await res.json()) as { ok?: boolean; title?: string };
-    return data.ok && data.title ? data.title : null;
-  } catch {
-    return null;
-  }
 }
 
 function LinkRow({

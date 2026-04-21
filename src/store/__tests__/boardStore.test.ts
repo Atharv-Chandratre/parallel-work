@@ -634,6 +634,15 @@ describe("boardStore", () => {
       expect(remaining[0].url).toBe("https://b");
     });
 
+    it("addTaskFromLink creates a task with the URL as title and as its first link", () => {
+      const taskId = getState().addTaskFromLink("c1", "https://example.com/page");
+      const task = getState().board.columns[0].tasks.find((t) => t.id === taskId);
+      expect(task).toBeDefined();
+      expect(task!.title).toBe("https://example.com/page");
+      expect(task!.links).toHaveLength(1);
+      expect(task!.links![0].url).toBe("https://example.com/page");
+    });
+
     it("migrates legacy githubUrl into links[] on import", () => {
       getState().importBoard({
         id: "irrelevant",

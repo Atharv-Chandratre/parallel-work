@@ -25,7 +25,7 @@ async function createColumn(page: Page, name: string) {
 }
 
 async function addTask(page: Page, title: string) {
-  const input = page.getByPlaceholder("Task title...");
+  const input = page.getByPlaceholder(/Task title/);
   // If the add-task form is already open, use it directly; otherwise click to open
   if (!(await input.isVisible())) {
     await page.getByText("+ Add task").click();
@@ -324,6 +324,29 @@ test.describe("Task management", () => {
     await palette.getByRole("textbox", { name: "Command" }).fill("keyboard shortcuts");
     await page.keyboard.press("Enter");
     await expect(page.getByRole("dialog", { name: "Keyboard shortcuts" })).toBeVisible();
+  });
+
+  test("pasting a URL into Add task creates a task with that link", async ({ page }) => {
+    // Stub the title-fetch API so the test is hermetic (no real network).
+    await page.route("**/api/link-title*", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, title: "Stubbed Page Title" }),
+      })
+    );
+
+    const input = page.getByPlaceholder(/Task title/);
+    await page.getByText("+ Add task").click();
+    await input.fill("https://example.com/some-page");
+    await input.press("Enter");
+
+    // Title eventually becomes the fetched page title.
+    await expect(page.getByText("Stubbed Page Title")).toBeVisible();
+
+    // The card has a link icon that points to the URL we pasted.
+    const card = page.locator(".group").filter({ hasText: "Stubbed Page Title" });
+    await expect(card.locator('a[href="https://example.com/some-page"]')).toBeVisible();
   });
 
   test("header search filters tasks across columns", async ({ page }) => {

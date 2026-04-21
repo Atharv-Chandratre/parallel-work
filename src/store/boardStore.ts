@@ -41,6 +41,7 @@ type BoardState = {
   moveColumn: (fromIndex: number, toIndex: number) => void;
 
   addTask: (columnId: string, title: string) => void;
+  addTaskFromLink: (columnId: string, url: string) => string;
   updateTask: (
     columnId: string,
     taskId: string,
@@ -392,6 +393,38 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       persist(board);
       return { board };
     });
+  },
+
+  /**
+   * Create a new task whose first link is the given URL. Title starts as the
+   * URL itself so the card is never blank; callers fetch the page title async
+   * and update the task with it.
+   */
+  addTaskFromLink: (columnId: string, url: string) => {
+    const trimmed = url.trim();
+    const taskId = nanoid();
+    const linkId = nanoid();
+    set((state) => {
+      const board = {
+        ...state.board,
+        columns: state.board.columns.map((col) => {
+          if (col.id !== columnId) return col;
+          const newTask: Task = {
+            id: taskId,
+            title: trimmed,
+            status: "todo" as TaskStatus,
+            notes: "",
+            order: col.tasks.length,
+            createdAt: Date.now(),
+            links: [{ id: linkId, url: trimmed }],
+          };
+          return { ...col, tasks: [...col.tasks, newTask] };
+        }),
+      };
+      persist(board);
+      return { board };
+    });
+    return taskId;
   },
 
   addTaskLink: (columnId, taskId, url) => {

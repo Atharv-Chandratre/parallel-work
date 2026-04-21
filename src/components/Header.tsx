@@ -9,6 +9,7 @@ import type { LinkType } from "@/lib/linkUtils";
 import { formatShortcutForPill } from "@/lib/shortcuts";
 import { useIsMac } from "@/lib/useIsMac";
 import BoardPicker from "./BoardPicker";
+import { LinkKindIcon } from "./LinkIcon";
 
 function validateBoard(data: unknown): data is Board {
   if (!data || typeof data !== "object") return false;
@@ -236,13 +237,22 @@ export default function Header() {
                       key={status}
                       onClick={() => toggleStatusFilter(status)}
                       aria-pressed={active}
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
                         active
                           ? "text-white"
-                          : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                          : "border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                       }`}
-                      style={active ? { backgroundColor: cfg.color } : undefined}
+                      style={
+                        active
+                          ? { backgroundColor: cfg.color, borderColor: cfg.color }
+                          : { borderColor: `${cfg.color}55` }
+                      }
                     >
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ backgroundColor: cfg.color }}
+                        aria-hidden="true"
+                      />
                       {cfg.label}
                     </button>
                   );
@@ -263,13 +273,15 @@ export default function Header() {
                       key={kind}
                       onClick={() => toggleLinkTypeFilter(kind)}
                       aria-pressed={active}
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                      title={label}
+                      aria-label={label}
+                      className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition-colors cursor-pointer ${
                         active
-                          ? "bg-blue-500 text-white"
-                          : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
+                          ? "border-blue-500 bg-blue-500 text-white"
+                          : "border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                       }`}
                     >
-                      {label}
+                      <LinkKindIcon kind={kind} size={14} />
                     </button>
                   );
                 })}

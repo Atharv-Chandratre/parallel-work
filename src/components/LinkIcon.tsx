@@ -85,3 +85,20 @@ export default function LinkIcon({ url, size = 14, className }: LinkIconProps) {
   const Icon = ICON_MAP[linkType];
   return <Icon size={size} className={className} />;
 }
+
+/**
+ * Render the icon for a specific LinkType directly (no URL classification).
+ * Used by the Filters popover so link-type chips can show logos.
+ */
+export function LinkKindIcon({
+  kind,
+  size = 14,
+  className,
+}: {
+  kind: LinkType;
+  size?: number;
+  className?: string;
+}) {
+  const Icon = ICON_MAP[kind];
+  return <Icon size={size} className={className} />;
+}

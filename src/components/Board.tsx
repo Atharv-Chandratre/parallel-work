@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import CommandPalette from "./CommandPalette";
 import { useUiStore } from "@/store/uiStore";
 import {
@@ -207,7 +207,10 @@ export default function Board() {
     }
   };
 
-  if (board.columns.length === 0) {
+  const visibleColumns = board.columns.filter((c) => !c.hidden);
+  const hiddenColumns = board.columns.filter((c) => c.hidden);
+
+  if (visibleColumns.length === 0 && hiddenColumns.length === 0) {
     return (
       <>
         <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4 pt-5">
@@ -219,7 +222,7 @@ export default function Board() {
     );
   }
 
-  const columnIds = board.columns.map((c) => `column-${c.id}`);
+  const columnIds = visibleColumns.map((c) => `column-${c.id}`);
 
   return (
     <>
@@ -231,14 +234,92 @@ export default function Board() {
       >
         <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
           <div className="flex flex-1 gap-4 overflow-x-auto p-4 pt-5">
-            {board.columns.map((column) => (
+            {visibleColumns.map((column) => (
               <Column key={column.id} column={column} />
             ))}
-            <AddColumn />
+            <div className="flex flex-col gap-2 shrink-0">
+              <AddColumn />
+              {hiddenColumns.length > 0 && <HiddenColumnsPanel columns={hiddenColumns} />}
+            </div>
           </div>
         </SortableContext>
       </DndContext>
       {paletteOpen && <CommandPalette onClose={closeCommandPalette} />}
     </>
+  );
+}
+
+function HiddenColumnsPanel({
+  columns,
+}: {
+  columns: { id: string; title: string; color: string }[];
+}) {
+  const [open, setOpen] = useState(false);
+  const toggleColumnHidden = useBoardStore((s) => s.toggleColumnHidden);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={rootRef}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="inline-flex w-full items-center justify-between gap-2 rounded-md border border-dashed border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+      >
+        <span>Hidden projects ({columns.length})</span>
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+          style={{ transform: open ? "rotate(180deg)" : "none" }}
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-0 top-full z-40 mt-1 w-64 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-1 shadow-xl"
+        >
+          <div className="px-3 pt-1 pb-1 text-[10px] uppercase tracking-wider text-zinc-400">
+            Hidden Projects
+          </div>
+          {columns.map((c) => (
+            <div
+              key={c.id}
+              className="group flex items-center gap-2 px-2 py-1 text-xs text-zinc-700 dark:text-zinc-200"
+            >
+              <span
+                aria-hidden="true"
+                className="inline-block h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: c.color }}
+              />
+              <span className="flex-1 truncate italic">{c.title}</span>
+              <button
+                onClick={() => toggleColumnHidden(c.id)}
+                title="Unhide project"
+                aria-label={`Unhide project ${c.title}`}
+                className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                Unhide
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

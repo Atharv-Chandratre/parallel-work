@@ -27,6 +27,7 @@ export type Column = {
   color: string;
   order: number;
   tasks: Task[];
+  hidden?: boolean;
 };
 
 export type Board = {

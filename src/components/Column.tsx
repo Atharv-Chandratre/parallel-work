@@ -60,6 +60,7 @@ export default function Column({ column }: ColumnProps) {
   const renameColumn = useBoardStore((s) => s.renameColumn);
   const deleteColumn = useBoardStore((s) => s.deleteColumn);
   const deleteDoneTasks = useBoardStore((s) => s.deleteDoneTasks);
+  const toggleColumnHidden = useBoardStore((s) => s.toggleColumnHidden);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -179,6 +180,15 @@ export default function Column({ column }: ColumnProps) {
                   className="w-full px-3 py-1.5 text-left text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer"
                 >
                   Rename
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    toggleColumnHidden(column.id);
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer"
+                >
+                  Hide Project
                 </button>
                 <button
                   onClick={() => {

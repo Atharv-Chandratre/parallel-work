@@ -78,6 +78,30 @@ describe("boardStore", () => {
       expect(getState().board.columns[1].order).toBe(1);
     });
 
+    it("toggleColumnHidden hides a column", () => {
+      getState().addColumn("A");
+      getState().addColumn("B");
+      const bId = getState().board.columns[1].id;
+      getState().toggleColumnHidden(bId);
+      expect(getState().board.columns[1].hidden).toBe(true);
+    });
+
+    it("toggleColumnHidden unhides a previously hidden column", () => {
+      getState().addColumn("A");
+      getState().addColumn("B");
+      const bId = getState().board.columns[1].id;
+      getState().toggleColumnHidden(bId);
+      getState().toggleColumnHidden(bId);
+      expect(getState().board.columns[1].hidden).toBe(false);
+    });
+
+    it("toggleColumnHidden refuses to hide the last visible column", () => {
+      getState().addColumn("Only");
+      const onlyId = getState().board.columns[0].id;
+      getState().toggleColumnHidden(onlyId);
+      expect(getState().board.columns[0].hidden).toBeFalsy();
+    });
+
     it("moveColumn reorders columns and updates order fields", () => {
       getState().addColumn("A");
       getState().addColumn("B");

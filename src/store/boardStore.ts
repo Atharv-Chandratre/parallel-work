@@ -40,6 +40,7 @@ type BoardState = {
   renameColumn: (columnId: string, title: string) => void;
   deleteColumn: (columnId: string) => void;
   moveColumn: (fromIndex: number, toIndex: number) => void;
+  toggleColumnHidden: (columnId: string) => void;
 
   addTask: (columnId: string, title: string) => void;
   addTaskFromLink: (columnId: string, url: string) => string;
@@ -390,6 +391,29 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         columns: state.board.columns
           .filter((col) => col.id !== columnId)
           .map((col, i) => ({ ...col, order: i })),
+      };
+      persist(board);
+      return { board };
+    });
+  },
+
+  toggleColumnHidden: (columnId: string) => {
+    set((state) => {
+      const target = state.board.columns.find((c) => c.id === columnId);
+      if (!target) return state;
+      const willHide = !target.hidden;
+      if (willHide) {
+        const visibleOthers = state.board.columns.filter((c) => c.id !== columnId && !c.hidden);
+        if (visibleOthers.length === 0) {
+          useToastStore.getState().push("Can't hide the only visible project.", "error");
+          return state;
+        }
+      }
+      const board = {
+        ...state.board,
+        columns: state.board.columns.map((c) =>
+          c.id === columnId ? { ...c, hidden: willHide } : c
+        ),
       };
       persist(board);
       return { board };

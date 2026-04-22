@@ -107,6 +107,29 @@ test.describe("Column management", () => {
     await expect(page.getByText("No projects yet")).toBeVisible();
   });
 
+  test("hide a project column via menu and unhide from the hidden panel", async ({ page }) => {
+    await createColumn(page, "Keep Visible");
+    await createColumn(page, "To Hide");
+
+    // Open the 3-dot menu for "To Hide" — pick the second column header.
+    const columnHeaders = page.locator('[style*="border-top"]');
+    await columnHeaders.nth(1).locator("button").first().click();
+    await page.locator("div.absolute button").filter({ hasText: "Hide Project" }).click();
+
+    // Column heading disappears from the board; Hidden panel surfaces.
+    await expect(page.getByRole("heading", { name: "To Hide" })).not.toBeVisible();
+    const hiddenToggle = page.getByRole("button", { name: /Hidden projects \(1\)/ });
+    await expect(hiddenToggle).toBeVisible();
+
+    // Unhide it.
+    await hiddenToggle.click();
+    await page.getByLabel("Unhide project To Hide").click();
+
+    // Back on the board, panel gone.
+    await expect(page.getByRole("heading", { name: "To Hide" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Hidden projects/ })).not.toBeVisible();
+  });
+
   test("cancel delete column via modal", async ({ page }) => {
     await createColumn(page, "Keep Me");
 

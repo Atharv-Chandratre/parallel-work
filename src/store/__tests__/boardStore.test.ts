@@ -558,6 +558,39 @@ describe("boardStore", () => {
       expect(s.board.columns).toEqual([]);
       expect(s.activeBoardId).toBe(s.board.id);
     });
+
+    it("toggleBoardHidden hides a non-active board", () => {
+      const second = getState().createBoard("Second");
+      getState().switchBoard("b1"); // active = b1
+      getState().toggleBoardHidden(second);
+      expect(getState().boards[second].hidden).toBe(true);
+      expect(getState().activeBoardId).toBe("b1");
+    });
+
+    it("toggleBoardHidden unhides a previously hidden board", () => {
+      const second = getState().createBoard("Second");
+      getState().switchBoard("b1");
+      getState().toggleBoardHidden(second);
+      expect(getState().boards[second].hidden).toBe(true);
+      getState().toggleBoardHidden(second);
+      expect(getState().boards[second].hidden).toBe(false);
+    });
+
+    it("toggleBoardHidden switches to another visible board when hiding the active one", () => {
+      const second = getState().createBoard("Second"); // becomes active
+      expect(getState().activeBoardId).toBe(second);
+      getState().toggleBoardHidden(second);
+      expect(getState().boards[second].hidden).toBe(true);
+      expect(getState().activeBoardId).toBe("b1");
+      expect(getState().board.id).toBe("b1");
+    });
+
+    it("toggleBoardHidden refuses to hide the last visible board", () => {
+      // Only b1 visible; hiding it should be rejected.
+      getState().toggleBoardHidden("b1");
+      expect(getState().boards["b1"].hidden).toBeFalsy();
+      expect(getState().activeBoardId).toBe("b1");
+    });
   });
 
   describe("Task link actions", () => {

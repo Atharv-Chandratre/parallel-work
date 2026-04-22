@@ -33,6 +33,7 @@ export type Board = {
   id: string;
   name?: string;
   columns: Column[];
+  hidden?: boolean;
 };
 
 export type BoardsCollection = {

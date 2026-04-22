@@ -280,6 +280,34 @@ test.describe("Task management", () => {
     await expect(page.getByText("Task in first board")).toBeVisible();
   });
 
+  test("hide and unhide a board via the board picker", async ({ page }) => {
+    // Start with the default "Test Board" active, then create a second board.
+    await page.getByRole("button", { name: /Test Board/ }).click();
+    page.once("dialog", (d) => d.accept("Second Board"));
+    await page.getByRole("button", { name: "New board" }).click();
+
+    // Second Board is now active. Open the picker — both should be listed.
+    await page.getByRole("button", { name: /Second Board/ }).click();
+    await expect(page.getByRole("button", { name: /^Test Board$/ })).toBeVisible();
+
+    // Hide the (non-active) Test Board. Button is opacity-0 until hover,
+    // so dispatch the click directly like other tests in this file.
+    await page.getByLabel("Hide board Test Board").dispatchEvent("click");
+
+    // Test Board should leave the main list and surface the Hidden section.
+    await expect(page.getByRole("button", { name: /^Test Board$/ })).not.toBeVisible();
+    const hiddenToggle = page.getByRole("button", { name: /Hidden \(1\)/ });
+    await expect(hiddenToggle).toBeVisible();
+
+    // Expand the Hidden section and unhide the board.
+    await hiddenToggle.click();
+    await page.getByLabel("Unhide board Test Board").dispatchEvent("click");
+
+    // Test Board is visible again; switching back works.
+    await page.getByRole("button", { name: /^Test Board$/ }).click();
+    await expect(page.getByRole("button", { name: /^Test Board$/ })).toBeVisible();
+  });
+
   test("command palette opens via Cmd+K and runs a command", async ({ page }) => {
     await addTask(page, "Hello");
     const modifier = process.platform === "darwin" ? "Meta" : "Control";

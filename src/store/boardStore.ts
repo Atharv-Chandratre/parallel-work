@@ -34,6 +34,7 @@ type BoardState = {
   createBoard: (name: string) => string;
   renameBoardById: (id: string, name: string) => void;
   deleteBoardById: (id: string) => void;
+  toggleBoardHidden: (id: string) => void;
 
   addColumn: (title: string) => void;
   renameColumn: (columnId: string, title: string) => void;
@@ -179,13 +180,19 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const saved = await storage.loadBoards();
     let collection: BoardsCollection;
     if (saved && saved.boards && Object.keys(saved.boards).length > 0) {
+      const migratedBoards = Object.fromEntries(
+        Object.entries(saved.boards).map(([id, b]) => [id, migrateBoard(b)])
+      );
+      const savedActive = migratedBoards[saved.activeBoardId];
+      const pickActive = () => {
+        if (savedActive && !savedActive.hidden) return saved.activeBoardId;
+        const firstVisible = Object.values(migratedBoards).find((b) => !b.hidden);
+        if (firstVisible) return firstVisible.id;
+        return savedActive ? saved.activeBoardId : Object.keys(migratedBoards)[0];
+      };
       collection = {
-        activeBoardId: saved.boards[saved.activeBoardId]
-          ? saved.activeBoardId
-          : Object.keys(saved.boards)[0],
-        boards: Object.fromEntries(
-          Object.entries(saved.boards).map(([id, b]) => [id, migrateBoard(b)])
-        ),
+        activeBoardId: pickActive(),
+        boards: migratedBoards,
       };
     } else {
       collection = createDefaultCollection();
@@ -288,6 +295,37 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       }
       return { boards: remaining };
     });
+    persist(get().board);
+  },
+
+  toggleBoardHidden: (id) => {
+    const state = get();
+    const target = state.boards[id];
+    if (!target) return;
+    const willHide = !target.hidden;
+    if (willHide) {
+      const visibleOthers = Object.values(state.boards).filter((b) => b.id !== id && !b.hidden);
+      if (visibleOthers.length === 0) {
+        useToastStore.getState().push("Can't hide the only visible board.", "error");
+        return;
+      }
+      const updated = { ...target, hidden: true };
+      const boards = { ...state.boards, [id]: updated };
+      const isActive = state.activeBoardId === id;
+      if (isActive) {
+        const nextId = visibleOthers[0].id;
+        // Snapshot current live board before switching.
+        boards[state.activeBoardId] = { ...state.board, hidden: true };
+        set({ boards, activeBoardId: nextId, board: boards[nextId] });
+      } else {
+        set({ boards });
+      }
+    } else {
+      const updated = { ...target, hidden: false };
+      const boards = { ...state.boards, [id]: updated };
+      const isActive = state.activeBoardId === id;
+      set({ boards, ...(isActive ? { board: updated } : {}) });
+    }
     persist(get().board);
   },
 

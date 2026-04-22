@@ -10,8 +10,10 @@ export default function BoardPicker() {
   const createBoard = useBoardStore((s) => s.createBoard);
   const renameBoardById = useBoardStore((s) => s.renameBoardById);
   const deleteBoardById = useBoardStore((s) => s.deleteBoardById);
+  const toggleBoardHidden = useBoardStore((s) => s.toggleBoardHidden);
 
   const [open, setOpen] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,7 +27,9 @@ export default function BoardPicker() {
 
   const activeBoard = boards[activeBoardId];
   const activeName = activeBoard?.name ?? "Board";
-  const entries = Object.values(boards);
+  const allEntries = Object.values(boards);
+  const visibleEntries = allEntries.filter((b) => !b.hidden);
+  const hiddenEntries = allEntries.filter((b) => b.hidden);
 
   const handleCreate = () => {
     const name = window.prompt("New board name?");
@@ -74,7 +78,7 @@ export default function BoardPicker() {
           <div className="px-3 pt-1 pb-1 text-[10px] uppercase tracking-wider text-zinc-400">
             Boards
           </div>
-          {entries.map((b) => {
+          {visibleEntries.map((b) => {
             const isActive = b.id === activeBoardId;
             return (
               <div
@@ -113,6 +117,27 @@ export default function BoardPicker() {
                   </svg>
                 </button>
                 <button
+                  onClick={() => toggleBoardHidden(b.id)}
+                  title="Hide board"
+                  aria-label={`Hide board ${b.name ?? b.id}`}
+                  className="rounded p-1 text-zinc-400 hover:text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                >
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a19.77 19.77 0 0 1 5.06-5.94" />
+                    <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a19.77 19.77 0 0 1-3.16 3.84" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                </button>
+                <button
                   onClick={() => handleDelete(b.id, b.name ?? b.id)}
                   title="Delete board"
                   aria-label={`Delete board ${b.name ?? b.id}`}
@@ -132,6 +157,75 @@ export default function BoardPicker() {
               </div>
             );
           })}
+          {hiddenEntries.length > 0 && (
+            <div className="mt-1 border-t border-zinc-200 dark:border-zinc-700 pt-1">
+              <button
+                onClick={() => setShowHidden((v) => !v)}
+                aria-expanded={showHidden}
+                className="flex w-full items-center justify-between px-3 py-1 text-left text-[10px] uppercase tracking-wider text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+              >
+                <span>Hidden ({hiddenEntries.length})</span>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                  style={{ transform: showHidden ? "rotate(180deg)" : "none" }}
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+              {showHidden &&
+                hiddenEntries.map((b) => (
+                  <div
+                    key={b.id}
+                    className="group flex items-center gap-1 px-2 py-1 text-xs text-zinc-500 dark:text-zinc-400"
+                  >
+                    <span className="flex-1 truncate italic">{b.name ?? b.id}</span>
+                    <button
+                      onClick={() => toggleBoardHidden(b.id)}
+                      title="Unhide board"
+                      aria-label={`Unhide board ${b.name ?? b.id}`}
+                      className="rounded p-1 text-zinc-400 hover:text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(b.id, b.name ?? b.id)}
+                      title="Delete board"
+                      aria-label={`Delete board ${b.name ?? b.id}`}
+                      className="rounded p-1 text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+            </div>
+          )}
           <div className="mt-1 border-t border-zinc-200 dark:border-zinc-700 pt-1">
             <button
               onClick={handleCreate}

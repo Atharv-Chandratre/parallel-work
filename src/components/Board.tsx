@@ -237,9 +237,9 @@ export default function Board() {
             {visibleColumns.map((column) => (
               <Column key={column.id} column={column} />
             ))}
-            <div className="flex flex-col gap-2 shrink-0">
+            <div className="flex flex-col gap-2 shrink-0 self-stretch">
               {hiddenColumns.length > 0 && <HiddenColumnsPanel columns={hiddenColumns} />}
-              <AddColumn compact={hiddenColumns.length > 0} />
+              <AddColumn />
             </div>
           </div>
         </SortableContext>

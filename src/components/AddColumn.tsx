@@ -42,7 +42,7 @@ export default function AddColumn({ compact = false }: AddColumnProps) {
     return (
       <button
         onClick={() => setIsAdding(true)}
-        className={`flex w-72 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500 transition-colors hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer ${compact ? "h-[100px] min-h-[100px]" : "h-full min-h-[120px]"}`}
+        className={`flex w-72 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500 transition-colors hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer ${compact ? "h-[100px] min-h-[100px]" : "flex-1 min-h-[120px]"}`}
       >
         <span className="text-sm font-medium">+ Add Project</span>
       </button>

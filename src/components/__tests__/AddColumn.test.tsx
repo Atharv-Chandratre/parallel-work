@@ -78,10 +78,10 @@ describe("AddColumn", () => {
     expect(btn.className).not.toMatch(/h-full/);
   });
 
-  it("uses full height class when compact prop is false", () => {
+  it("uses flex-1 class when compact prop is false", () => {
     render(<AddColumn compact={false} />);
     const btn = screen.getByText("+ Add Project").closest("button")!;
-    expect(btn.className).toMatch(/h-full/);
+    expect(btn.className).toMatch(/flex-1/);
     expect(btn.className).not.toMatch(/h-\[100px\]/);
   });
 });

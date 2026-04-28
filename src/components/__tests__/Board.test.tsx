@@ -102,6 +102,37 @@ describe("Board", () => {
     expect(useUiStore.getState().isCommandPaletteOpen).toBe(false);
   });
 
+  it("Add Project button is compact when hidden columns exist", () => {
+    useBoardStore.setState({
+      initialized: true,
+      board: {
+        id: "b",
+        columns: [
+          { id: "c1", title: "Visible", color: "#000", order: 0, tasks: [], hidden: false },
+          { id: "c2", title: "Hidden", color: "#000", order: 1, tasks: [], hidden: true },
+        ],
+      },
+    });
+    render(<Board />);
+    const addBtn = screen.getByText("+ Add Project").closest("button")!;
+    expect(addBtn.className).toMatch(/h-\[100px\]/);
+  });
+
+  it("Add Project button uses full height when no hidden columns", () => {
+    useBoardStore.setState({
+      initialized: true,
+      board: {
+        id: "b",
+        columns: [
+          { id: "c1", title: "Visible", color: "#000", order: 0, tasks: [], hidden: false },
+        ],
+      },
+    });
+    render(<Board />);
+    const addBtn = screen.getByText("+ Add Project").closest("button")!;
+    expect(addBtn.className).toMatch(/h-full/);
+  });
+
   it("clears expanded task on document pointerdown outside a card", () => {
     useBoardStore.setState({
       initialized: true,

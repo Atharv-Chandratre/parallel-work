@@ -239,7 +239,7 @@ export default function Board() {
             ))}
             <div className="flex flex-col gap-2 shrink-0">
               {hiddenColumns.length > 0 && <HiddenColumnsPanel columns={hiddenColumns} />}
-              <AddColumn />
+              <AddColumn compact={hiddenColumns.length > 0} />
             </div>
           </div>
         </SortableContext>

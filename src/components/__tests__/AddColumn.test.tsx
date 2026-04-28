@@ -70,4 +70,18 @@ describe("AddColumn", () => {
     expect(useBoardStore.getState().board.columns).toHaveLength(1);
     expect(useBoardStore.getState().board.columns[0].title).toBe("Button Project");
   });
+
+  it("uses compact height class when compact prop is true", () => {
+    render(<AddColumn compact />);
+    const btn = screen.getByText("+ Add Project").closest("button")!;
+    expect(btn.className).toMatch(/h-\[100px\]/);
+    expect(btn.className).not.toMatch(/h-full/);
+  });
+
+  it("uses full height class when compact prop is false", () => {
+    render(<AddColumn compact={false} />);
+    const btn = screen.getByText("+ Add Project").closest("button")!;
+    expect(btn.className).toMatch(/h-full/);
+    expect(btn.className).not.toMatch(/h-\[100px\]/);
+  });
 });

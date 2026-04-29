@@ -32,6 +32,14 @@ describe("getLinkType", () => {
     );
   });
 
+  it("returns google-drive for Google Docs/Sheets/Slides/Drive URLs", () => {
+    expect(getLinkType("https://docs.google.com/document/d/abc/edit")).toBe("google-drive");
+    expect(getLinkType("https://docs.google.com/spreadsheets/d/abc/edit")).toBe("google-drive");
+    expect(getLinkType("https://docs.google.com/presentation/d/abc/edit")).toBe("google-drive");
+    expect(getLinkType("https://drive.google.com/file/d/abc/view")).toBe("google-drive");
+    expect(getLinkType("https://drive.google.com/drive/folders/abc")).toBe("google-drive");
+  });
+
   it("returns generic for other URLs", () => {
     expect(getLinkType("https://example.com/page")).toBe("generic");
     expect(getLinkType("https://jira.example.com/issue-123")).toBe("generic");

@@ -29,6 +29,11 @@ describe("LinkIcon", () => {
     expect(container.querySelector("svg")).toBeInTheDocument();
   });
 
+  it("renders for google drive URL", () => {
+    const { container } = render(<LinkIcon url="https://docs.google.com/document/d/abc/edit" />);
+    expect(container.querySelector("svg")).toBeInTheDocument();
+  });
+
   it("renders for generic URL", () => {
     const { container } = render(<LinkIcon url="https://example.com/doc" />);
     expect(container.querySelector("svg")).toBeInTheDocument();

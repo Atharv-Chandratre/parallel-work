@@ -1,4 +1,10 @@
-export type LinkType = "github" | "slack" | "decision-systems" | "jira" | "generic";
+export type LinkType =
+  | "github"
+  | "slack"
+  | "decision-systems"
+  | "jira"
+  | "google-drive"
+  | "generic";
 
 /**
  * Detects the type of link from a URL for displaying the appropriate icon.
@@ -21,6 +27,9 @@ export function getLinkType(url: string): LinkType {
     }
     if (host.includes("atlassian.net") || host.endsWith(".atlassian.net")) {
       return "jira";
+    }
+    if (host === "docs.google.com" || host === "drive.google.com") {
+      return "google-drive";
     }
   } catch {
     // Invalid URL, treat as generic

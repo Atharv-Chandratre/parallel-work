@@ -53,6 +53,14 @@ function DecisionSystemsIcon({ size = 14, className }: { size?: number; classNam
   );
 }
 
+function GoogleDriveIcon({ size = 14, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path fillRule="evenodd" d="M12 2L2 20h20L12 2zm0 4.5L5.5 18h13L12 6.5z" />
+    </svg>
+  );
+}
+
 function GenericLinkIcon({ size = 14, className }: { size?: number; className?: string }) {
   return (
     <svg
@@ -77,6 +85,7 @@ const ICON_MAP: Record<LinkType, React.ComponentType<{ size?: number; className?
   slack: SlackIcon,
   "decision-systems": DecisionSystemsIcon,
   jira: JiraIcon,
+  "google-drive": GoogleDriveIcon,
   generic: GenericLinkIcon,
 };
 

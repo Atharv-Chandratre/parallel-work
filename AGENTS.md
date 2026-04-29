@@ -2,6 +2,15 @@
 
 Guidance for AI coding agents working in this repo. Keep it tight and correct; if something here contradicts the code, the code wins — update this file.
 
+## Agent maintenance rules
+
+- **Keep this file current.** After any change that affects repo layout, stack, scripts, stores, test patterns, or gotchas — update the relevant section before committing. The file is authoritative only when it reflects the code.
+- **Pre-push gate.** Before every `git push`, run all three checks in order. Only push when all pass:
+  1. `npm run lint`
+  2. `npm test`
+  3. `npm run test:e2e`
+     If any fails, fix it first. Do not `--no-verify` or skip.
+
 ## What this is
 
 A single-user kanban board for managing "agentic coding" task queues: columns are projects, tasks cycle `todo → queued → in-review → done`, each task can link to GitHub PRs, Jira tickets, Slack threads, and other URLs. Tasks persist to localStorage and to a small Next.js API route (`data/boards.json`). Multi-board supported.
@@ -38,7 +47,7 @@ src/
   lib/
     types.ts                 # Task, TaskLink, Column, Board, BoardsCollection, STATUS_CONFIG, COLUMN_COLORS
     storage.ts               # loadBoards / saveBoards / saveBoardsSync + legacy-key migration
-    linkUtils.ts             # getLinkType(url) → "github"|"slack"|"decision-systems"|"jira"|"generic"
+    linkUtils.ts             # getLinkType(url) → "github"|"slack"|"decision-systems"|"jira"|"google-drive"|"generic"
     shortcuts.ts             # canonical keyboard-shortcut list rendered by ShortcutsHelp
     useIsMac.ts              # hook returning true on macOS (post-hydration)
   store/

@@ -56,7 +56,9 @@ function DecisionSystemsIcon({ size = 14, className }: { size?: number; classNam
 function GoogleDriveIcon({ size = 14, className }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path fillRule="evenodd" d="M12 2L2 20h20L12 2zm0 4.5L5.5 18h13L12 6.5z" />
+      <path d="M12 2L7 11h10z" />
+      <path d="M7 12L2 21h10z" />
+      <path d="M17 12L12 21h10z" />
     </svg>
   );
 }

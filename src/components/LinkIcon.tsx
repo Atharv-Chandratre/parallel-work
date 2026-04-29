@@ -1,5 +1,6 @@
 "use client";
 
+import { FaGoogleDrive } from "react-icons/fa6";
 import { getLinkType, type LinkType } from "@/lib/linkUtils";
 
 type LinkIconProps = {
@@ -54,13 +55,7 @@ function DecisionSystemsIcon({ size = 14, className }: { size?: number; classNam
 }
 
 function GoogleDriveIcon({ size = 14, className }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M12 2L7 11h10z" />
-      <path d="M7 12L2 21h10z" />
-      <path d="M17 12L12 21h10z" />
-    </svg>
-  );
+  return <FaGoogleDrive size={size} className={className} />;
 }
 
 function GenericLinkIcon({ size = 14, className }: { size?: number; className?: string }) {

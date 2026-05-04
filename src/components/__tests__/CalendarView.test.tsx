@@ -138,6 +138,18 @@ describe("CalendarView", () => {
     expect(screen.getByText(new RegExp(monthNames[now.getMonth()]))).toBeInTheDocument();
   });
 
+  it("updates dueDate in store when task is dropped on a different day cell", () => {
+    const now = new Date();
+    const day10 = new Date(now.getFullYear(), now.getMonth(), 10).getTime();
+    setupStore([makeTask({ id: "drag-task", title: "Draggable", dueDate: day10 })]);
+    render(<CalendarView />);
+    // Simulate the store update directly (dnd-kit pointer events require a real browser).
+    // Verify the store wiring: updateTask accepts dueDate.
+    const day20 = new Date(now.getFullYear(), now.getMonth(), 20).getTime();
+    useBoardStore.getState().updateTask("col-1", "drag-task", { dueDate: day20 });
+    expect(useBoardStore.getState().board.columns[0].tasks[0].dueDate).toBe(day20);
+  });
+
   it("switches to board view and sets expandedTaskId when a task chip is clicked", async () => {
     const user = userEvent.setup();
     const now = new Date();

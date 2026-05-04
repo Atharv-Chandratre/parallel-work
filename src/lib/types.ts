@@ -14,6 +14,7 @@ export type Task = {
   createdAt: number;
   startedAt?: number;
   completedAt?: number;
+  dueDate?: number;
   /**
    * @deprecated use `links` instead. Kept for one release for legacy board import.
    */

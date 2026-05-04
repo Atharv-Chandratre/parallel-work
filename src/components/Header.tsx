@@ -29,6 +29,8 @@ export default function Header() {
   const importBoard = useBoardStore((s) => s.importBoard);
   const openCommandPalette = useUiStore((s) => s.openCommandPalette);
   const openShortcuts = useUiStore((s) => s.openShortcuts);
+  const viewMode = useUiStore((s) => s.viewMode);
+  const setViewMode = useUiStore((s) => s.setViewMode);
   const isMac = useIsMac();
   const pill = formatShortcutForPill(isMac);
   const [dark, setDark] = useState(true);
@@ -133,6 +135,67 @@ export default function Header() {
           </h1>
         </div>
         <BoardPicker />
+        <div
+          role="group"
+          aria-label="View mode"
+          className="flex rounded-lg border border-zinc-300 dark:border-zinc-700 overflow-hidden text-xs font-medium"
+        >
+          <button
+            type="button"
+            onClick={() => setViewMode("board")}
+            aria-pressed={viewMode === "board"}
+            className={`flex items-center gap-1.5 px-2.5 py-1 transition-colors cursor-pointer ${
+              viewMode === "board"
+                ? "bg-blue-500 text-white"
+                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+            }`}
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="3" width="7" height="18" rx="1" />
+              <rect x="14" y="3" width="7" height="11" rx="1" />
+              <rect x="14" y="17" width="7" height="4" rx="1" />
+            </svg>
+            Board
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("calendar")}
+            aria-pressed={viewMode === "calendar"}
+            className={`flex items-center gap-1.5 px-2.5 py-1 border-l border-zinc-300 dark:border-zinc-700 transition-colors cursor-pointer ${
+              viewMode === "calendar"
+                ? "bg-blue-500 text-white"
+                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+            }`}
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            Calendar
+          </button>
+        </div>
       </div>
 
       <div className="hidden md:flex flex-1 items-center justify-center gap-2 px-4">

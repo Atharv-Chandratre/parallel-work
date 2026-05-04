@@ -3,6 +3,7 @@ import { create } from "zustand";
 type UiState = {
   isShortcutsOpen: boolean;
   isCommandPaletteOpen: boolean;
+  viewMode: "board" | "calendar";
 
   openShortcuts: () => void;
   closeShortcuts: () => void;
@@ -11,11 +12,14 @@ type UiState = {
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
   toggleCommandPalette: () => void;
+
+  setViewMode: (mode: "board" | "calendar") => void;
 };
 
 export const useUiStore = create<UiState>((set) => ({
   isShortcutsOpen: false,
   isCommandPaletteOpen: false,
+  viewMode: "board",
 
   openShortcuts: () => set({ isShortcutsOpen: true }),
   closeShortcuts: () => set({ isShortcutsOpen: false }),
@@ -24,4 +28,6 @@ export const useUiStore = create<UiState>((set) => ({
   openCommandPalette: () => set({ isCommandPaletteOpen: true }),
   closeCommandPalette: () => set({ isCommandPaletteOpen: false }),
   toggleCommandPalette: () => set((s) => ({ isCommandPaletteOpen: !s.isCommandPaletteOpen })),
+
+  setViewMode: (mode) => set({ viewMode: mode }),
 }));

@@ -9,6 +9,45 @@ import LinkIcon from "./LinkIcon";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+function DueDateBadge({ dueDate, done }: { dueDate: number; done: boolean }) {
+  const d = new Date(dueDate);
+  const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+  const dueMidnight = new Date(dueDate);
+  dueMidnight.setHours(0, 0, 0, 0);
+  const isOverdue = !done && dueMidnight < todayMidnight;
+  const isToday = !done && dueMidnight.getTime() === todayMidnight.getTime();
+  const colorClass = done
+    ? "text-zinc-400"
+    : isOverdue
+      ? "text-red-500"
+      : isToday
+        ? "text-amber-500"
+        : "text-zinc-400";
+  return (
+    <div className={`mt-1 flex items-center gap-0.5 text-[10px] font-medium ${colorClass}`}>
+      <svg
+        width="9"
+        height="9"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+      {label}
+    </div>
+  );
+}
+
 type TaskCardProps = {
   task: Task;
   columnId: string;
@@ -129,6 +168,7 @@ function TaskCard({ task, columnId }: TaskCardProps) {
           <div className="mt-1.5 min-w-0">
             <StatusBadge status={task.status} />
           </div>
+          {task.dueDate && <DueDateBadge dueDate={task.dueDate} done={task.status === "done"} />}
         </div>
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-1">

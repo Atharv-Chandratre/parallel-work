@@ -137,6 +137,68 @@ describe("TaskDetail", () => {
     expect(links).toHaveLength(0);
   });
 
+  describe("due date", () => {
+    it("renders due date input with no value when dueDate not set", () => {
+      render(<TaskDetail task={baseTask} columnId="col-1" />);
+      const input = screen.getByLabelText("Due date") as HTMLInputElement;
+      expect(input.value).toBe("");
+    });
+
+    it("renders due date input with correct value when dueDate is set", () => {
+      const taskWithDue: Task = {
+        ...baseTask,
+        dueDate: new Date("2025-12-25T00:00:00").getTime(),
+      };
+      render(<TaskDetail task={taskWithDue} columnId="col-1" />);
+      const input = screen.getByLabelText("Due date") as HTMLInputElement;
+      expect(input.value).toBe("2025-12-25");
+    });
+
+    it("updates dueDate in store when date input changes", async () => {
+      const user = userEvent.setup();
+      render(<TaskDetail task={baseTask} columnId="col-1" />);
+      const input = screen.getByLabelText("Due date");
+      await user.type(input, "2026-03-10");
+      const stored = useBoardStore.getState().board.columns[0].tasks[0].dueDate;
+      expect(stored).toBeDefined();
+    });
+
+    it("shows clear button when dueDate is set", () => {
+      const taskWithDue: Task = {
+        ...baseTask,
+        dueDate: new Date("2025-12-25T00:00:00").getTime(),
+      };
+      render(<TaskDetail task={taskWithDue} columnId="col-1" />);
+      expect(screen.getByLabelText("Clear due date")).toBeInTheDocument();
+    });
+
+    it("does not show clear button when dueDate is not set", () => {
+      render(<TaskDetail task={baseTask} columnId="col-1" />);
+      expect(screen.queryByLabelText("Clear due date")).not.toBeInTheDocument();
+    });
+
+    it("clears dueDate when clear button is clicked", async () => {
+      const user = userEvent.setup();
+      const taskWithDue: Task = {
+        ...baseTask,
+        dueDate: new Date("2025-12-25T00:00:00").getTime(),
+      };
+      useBoardStore.setState((s) => ({
+        board: {
+          ...s.board,
+          columns: s.board.columns.map((c) => ({
+            ...c,
+            tasks: c.tasks.map((t) => (t.id === baseTask.id ? taskWithDue : t)),
+          })),
+        },
+      }));
+      render(<TaskDetail task={taskWithDue} columnId="col-1" />);
+      await user.click(screen.getByLabelText("Clear due date"));
+      const stored = useBoardStore.getState().board.columns[0].tasks[0].dueDate;
+      expect(stored).toBeUndefined();
+    });
+  });
+
   describe("link auto-title", () => {
     beforeEach(() => {
       vi.restoreAllMocks();

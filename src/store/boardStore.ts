@@ -47,7 +47,7 @@ type BoardState = {
   updateTask: (
     columnId: string,
     taskId: string,
-    updates: Partial<Pick<Task, "title" | "notes" | "status">>
+    updates: Partial<Pick<Task, "title" | "notes" | "status" | "dueDate">>
   ) => void;
   deleteTask: (columnId: string, taskId: string) => void;
   deleteDoneTasks: (columnId: string) => void;

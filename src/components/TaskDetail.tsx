@@ -11,6 +11,20 @@ type TaskDetailProps = {
   columnId: string;
 };
 
+function toDueDateString(ts?: number): string {
+  if (!ts) return "";
+  const d = new Date(ts);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function fromDueDateString(s: string): number | undefined {
+  if (!s) return undefined;
+  return new Date(s + "T00:00:00").getTime();
+}
+
 function formatTimestamp(ts?: number): string {
   if (!ts) return "—";
   const d = new Date(ts);
@@ -207,6 +221,61 @@ export default function TaskDetail({ task, columnId }: TaskDetailProps) {
               className="flex-1 rounded-md bg-white dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none focus:border-blue-400 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 transition-all"
             />
           </div>
+        </div>
+      </div>
+
+      <div className="mt-2 space-y-1">
+        <label
+          htmlFor={`due-date-${task.id}`}
+          className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1"
+        >
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          Due date
+        </label>
+        <div className="flex items-center gap-1">
+          <input
+            id={`due-date-${task.id}`}
+            type="date"
+            value={toDueDateString(task.dueDate)}
+            onChange={(e) =>
+              updateTask(columnId, task.id, { dueDate: fromDueDateString(e.target.value) })
+            }
+            className="rounded-md bg-white dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 outline-none focus:border-blue-400 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 transition-all [color-scheme:light] dark:[color-scheme:dark]"
+          />
+          {task.dueDate && (
+            <button
+              onClick={() => updateTask(columnId, task.id, { dueDate: undefined })}
+              aria-label="Clear due date"
+              title="Clear due date"
+              className="rounded p-1 text-zinc-400 hover:text-red-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+            >
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 

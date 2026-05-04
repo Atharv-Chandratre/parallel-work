@@ -120,6 +120,32 @@ describe("TaskCard", () => {
     expect(screen.getByLabelText("Open link: https://example.com")).toBeInTheDocument();
   });
 
+  it("shows due date badge when dueDate is set", () => {
+    const futureDate = new Date(2099, 5, 15, 12, 0, 0).getTime(); // June 15, 2099 at noon local
+    renderCard(makeTask({ dueDate: futureDate }));
+    expect(screen.getByText("Jun 15")).toBeInTheDocument();
+  });
+
+  it("does not show due date badge when dueDate is not set", () => {
+    renderCard(makeTask());
+    expect(
+      screen.queryByText(/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/)
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows due date badge in red when task is overdue and not done", () => {
+    const pastDate = new Date("2000-01-01").getTime();
+    const { container } = renderCard(makeTask({ dueDate: pastDate }));
+    const badge = container.querySelector(".text-red-500");
+    expect(badge).toBeInTheDocument();
+  });
+
+  it("does not show red badge for overdue date when task is done", () => {
+    const pastDate = new Date("2000-01-01").getTime();
+    const { container } = renderCard(makeTask({ dueDate: pastDate, status: "done" }));
+    expect(container.querySelector(".text-red-500")).not.toBeInTheDocument();
+  });
+
   it('shows a "+N" overflow pill when there are more than 3 links', () => {
     renderCard(
       makeTask({

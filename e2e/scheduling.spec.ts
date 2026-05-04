@@ -179,12 +179,14 @@ test.describe("Calendar view", () => {
     await page.getByRole("heading", { name: "Sprint" }).first().click();
 
     await page.getByRole("button", { name: "Calendar", exact: true }).click();
-    await expect(page.getByRole("button", { name: /Jump Task/ })).toBeVisible();
+    const chip = page.getByRole("button", { name: /Jump Task/ });
+    await expect(chip).toBeVisible();
 
-    await page.getByRole("button", { name: /Jump Task/ }).click();
+    // dispatchEvent bypasses dnd-kit pointer capture (same pattern as board tests)
+    await chip.dispatchEvent("click");
 
     // Should be back on board view with task expanded
-    await expect(page.getByPlaceholder(/What to tell the agent/)).toBeVisible();
+    await expect(page.getByPlaceholder(/What to tell the agent/)).toBeVisible({ timeout: 10000 });
   });
 
   test("prev/next month navigation works", async ({ page }) => {

@@ -24,6 +24,16 @@ function extractTitle(html: string): string | null {
   return null;
 }
 
+// GitHub titles include trailing "· Pull Request #N · OWNER/REPO" / "· Issue #N · OWNER/REPO"
+// noise. Strip it so the saved task title matches the PR/issue title alone.
+function cleanGithubTitle(title: string): string {
+  const pr = title.match(/^(.*?)(?:\s+by\s+[^·]+)?\s+·\s+Pull Request\s+#\d+\s+·\s+.+$/);
+  if (pr) return pr[1].trim();
+  const issue = title.match(/^(.*?)\s+·\s+Issue\s+#\d+\s+·\s+.+$/);
+  if (issue) return issue[1].trim();
+  return title;
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const raw = searchParams.get("url");
@@ -77,10 +87,11 @@ export async function GET(req: Request) {
         return merged;
       }, new Uint8Array())
     );
-    const title = extractTitle(html);
-    if (!title) {
+    const rawTitle = extractTitle(html);
+    if (!rawTitle) {
       return NextResponse.json({ ok: false, error: "no title found" }, { status: 404 });
     }
+    const title = target.hostname === "github.com" ? cleanGithubTitle(rawTitle) : rawTitle;
     return NextResponse.json({ ok: true, title });
   } catch (err) {
     return NextResponse.json(

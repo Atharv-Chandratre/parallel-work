@@ -400,6 +400,34 @@ test.describe("Task management", () => {
     await expect(card.locator('a[href="https://example.com/some-page"]')).toBeVisible();
   });
 
+  test("pasting a GitHub PR URL sets the task title to the PR title (no URL/suffix)", async ({
+    page,
+  }) => {
+    // Server-side route strips the "· Pull Request #N · OWNER/REPO" suffix
+    // from GitHub og:title before responding. Stub that cleaned response here.
+    const prUrl = "https://github.com/Atharv-Chandratre/parallel-work/pull/1";
+    const cleanTitle = "Add task scheduling: due dates + calendar view";
+    await page.route("**/api/link-title*", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, title: cleanTitle }),
+      })
+    );
+
+    const input = page.getByPlaceholder(/Task title/);
+    await page.getByText("+ Add task").click();
+    await input.fill(prUrl);
+    await input.press("Enter");
+
+    await expect(page.getByText(cleanTitle)).toBeVisible();
+    // The raw URL should not appear as the visible task title.
+    await expect(page.locator(`span:text-is("${prUrl}")`)).toHaveCount(0);
+
+    const card = page.locator(".group").filter({ hasText: cleanTitle });
+    await expect(card.locator(`a[href="${prUrl}"]`)).toBeVisible();
+  });
+
   test("header search filters tasks across columns", async ({ page }) => {
     await addTask(page, "Buy coffee");
     await addTask(page, "Write report");

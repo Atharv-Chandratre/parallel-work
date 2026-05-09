@@ -76,4 +76,41 @@ describe("GET /api/link-title", () => {
     const res = await GET(makeRequest("https://example.com/"));
     expect(res.status).toBe(502);
   });
+
+  it("strips Pull Request suffix for github.com URLs", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        htmlResponse(
+          `<html><head><meta property="og:title" content="Add task scheduling: due dates + calendar view by Atharv-Chandratre · Pull Request #1 · Atharv-Chandratre/parallel-work"></head></html>`
+        )
+      );
+    const res = await GET(makeRequest("https://github.com/Atharv-Chandratre/parallel-work/pull/1"));
+    const body = await res.json();
+    expect(body.title).toBe("Add task scheduling: due dates + calendar view");
+  });
+
+  it("strips Issue suffix for github.com URLs", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        htmlResponse(
+          `<html><head><meta property="og:title" content="Login bug repro · Issue #42 · acme/widgets"></head></html>`
+        )
+      );
+    const res = await GET(makeRequest("https://github.com/acme/widgets/issues/42"));
+    const body = await res.json();
+    expect(body.title).toBe("Login bug repro");
+  });
+
+  it("leaves non-github titles untouched even when they contain · Pull Request", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        htmlResponse(`<html><head><title>Random · Pull Request #1 · foo/bar</title></head></html>`)
+      );
+    const res = await GET(makeRequest("https://example.com/page"));
+    const body = await res.json();
+    expect(body.title).toBe("Random · Pull Request #1 · foo/bar");
+  });
 });

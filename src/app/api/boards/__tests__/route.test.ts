@@ -135,5 +135,24 @@ describe("API route /api/boards", () => {
         else process.env.VERCEL = prev;
       }
     });
+
+    it("short-circuits to 503 when ZEROBOX_APP_NAME env is set (zeroBox standalone)", async () => {
+      const prev = process.env.ZEROBOX_APP_NAME;
+      process.env.ZEROBOX_APP_NAME = "parallel-work";
+      try {
+        const req = new Request("http://localhost/api/boards", {
+          method: "PUT",
+          body: JSON.stringify({ activeBoardId: "a", boards: {} }),
+        });
+        const { PUT } = await import("@/app/api/boards/route");
+        const res = await PUT(req);
+        expect(res.status).toBe(503);
+        const body = await res.json();
+        expect(body.code).toBe("STORAGE_READONLY");
+      } finally {
+        if (prev === undefined) delete process.env.ZEROBOX_APP_NAME;
+        else process.env.ZEROBOX_APP_NAME = prev;
+      }
+    });
   });
 });

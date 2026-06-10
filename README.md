@@ -29,8 +29,20 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deploy on zeroBox
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This app deploys to [zeroBox](https://console.zerobox.doordash.team), DoorDash's internal app host. It runs as a Next.js **standalone** app (auto-detected — the `/api/*` routes need a server, so `export` mode is not used).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run deploy
+# or directly:
+zerobox deploy
+```
+
+`zerobox deploy` builds with `next build` (webpack, required for the standalone output on Next 16+), assembles the bundle, and uploads a new version. The deploy prints a console URL where you click **Promote** to flip live traffic.
+
+Deploy config lives in [`zerobox.json`](./zerobox.json) (`{ "runtime": { "kind": "nextjs" } }`) — mode and image settings are resolved from `next.config` at deploy time; you don't edit `next.config` or write a Dockerfile.
+
+**Storage note:** board data is localStorage-first on the client. The server `/api/boards` route persists to `cwd/data` only on a writable host; on zeroBox (and Vercel/Lambda) it returns `503 STORAGE_READONLY` and the client stays in localStorage-only mode, since the deployed bundle filesystem is not durable across promotes.
+
+See the [zeroBox Next.js deploy guide](https://github.com/doordash/web-next/blob/master/packages/zerobox-functions-cli/docs/nextjs-deploy.md) for details.

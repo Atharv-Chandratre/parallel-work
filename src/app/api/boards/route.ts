@@ -6,10 +6,14 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const BOARDS_FILE = path.join(DATA_DIR, "boards.json");
 const LEGACY_BOARD_FILE = path.join(DATA_DIR, "board.json");
 
-// On serverless hosts (Vercel, AWS Lambda, etc.) the app root is a read-only
-// bundle — we can't persist /var/task/data. Signal that to the client so it
-// stays in localStorage-only mode instead of toasting "HTTP 500" on every edit.
-const IS_READ_ONLY_FS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+// On serverless / bundle hosts (Vercel, AWS Lambda, zeroBox standalone) the app
+// root is a read-only or non-durable bundle — we can't persist cwd/data across
+// restarts or promotes. zeroBox always sets ZEROBOX_APP_NAME in the child env
+// (see app-runtime-contract). Signal read-only to the client so it stays in
+// localStorage-only mode instead of toasting "HTTP 500" on every edit.
+const IS_READ_ONLY_FS = Boolean(
+  process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.ZEROBOX_APP_NAME
+);
 
 function readOnlyResponse() {
   return NextResponse.json(

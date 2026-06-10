@@ -44,8 +44,8 @@ export const storage = {
         if (data) return data as BoardsCollection;
         return readLocalCollection();
       }
-      // 503 + STORAGE_READONLY means the server can't persist (e.g. Vercel);
-      // latch apiAvailable=false so we never bother it with PUTs.
+      // 503 + STORAGE_READONLY means the server can't persist (e.g. zeroBox's
+      // non-durable bundle FS); latch apiAvailable=false so we never bother it with PUTs.
       if (res.status === 503) {
         apiAvailable = false;
         return readLocalCollection();

@@ -6,13 +6,13 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const BOARDS_FILE = path.join(DATA_DIR, "boards.json");
 const LEGACY_BOARD_FILE = path.join(DATA_DIR, "board.json");
 
-// On serverless / bundle hosts (Vercel, AWS Lambda, zeroBox standalone) the app
-// root is a read-only or non-durable bundle — we can't persist cwd/data across
-// restarts or promotes. zeroBox always sets ZEROBOX_APP_NAME in the child env
-// (see app-runtime-contract). Signal read-only to the client so it stays in
-// localStorage-only mode instead of toasting "HTTP 500" on every edit.
+// On bundle hosts (zeroBox standalone, AWS Lambda) the app root is a read-only
+// or non-durable bundle — we can't persist cwd/data across restarts or promotes.
+// zeroBox always sets ZEROBOX_APP_NAME in the child env (see app-runtime-contract).
+// Signal read-only to the client so it stays in localStorage-only mode instead of
+// toasting "HTTP 500" on every edit.
 const IS_READ_ONLY_FS = Boolean(
-  process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.ZEROBOX_APP_NAME
+  process.env.ZEROBOX_APP_NAME || process.env.AWS_LAMBDA_FUNCTION_NAME
 );
 
 function readOnlyResponse() {
@@ -30,7 +30,7 @@ function isReadOnlyFsError(err: unknown): boolean {
   if (!(err instanceof Error) || !("code" in err)) return false;
   const code = (err as NodeJS.ErrnoException).code;
   // EROFS: read-only fs. EACCES: no write permission. ENOENT on mkdir: the
-  // parent dir itself doesn't exist (happens on Vercel's /var/task).
+  // parent dir itself doesn't exist (happens on read-only bundle roots).
   return code === "EROFS" || code === "EACCES" || code === "ENOENT";
 }
 

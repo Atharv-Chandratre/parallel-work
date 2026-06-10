@@ -119,7 +119,7 @@ describe("storage", () => {
     const { storage } = await import("@/lib/storage");
     await storage.loadBoards();
 
-    // Now the first PUT gets the Vercel-read-only signal.
+    // Now the first PUT gets the read-only signal.
     vi.mocked(fetch).mockResolvedValueOnce({
       ok: false,
       status: 503,

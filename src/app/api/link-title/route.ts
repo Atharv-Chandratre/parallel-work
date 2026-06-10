@@ -49,7 +49,7 @@ function parseGithubPullOrIssue(target: URL): GithubRef | null {
 }
 
 // Try the GitHub REST API first for github.com PR/issue URLs. Works for
-// private repos when GITHUB_TOKEN is set (recommended on Vercel) and for
+// private repos when GITHUB_TOKEN is set (recommended in production) and for
 // public repos either way (subject to anonymous rate limits).
 async function fetchGithubApiTitle(ref: GithubRef, signal: AbortSignal): Promise<string | null> {
   const apiUrl = `https://api.github.com/repos/${ref.owner}/${ref.repo}/${ref.kind}/${ref.num}`;

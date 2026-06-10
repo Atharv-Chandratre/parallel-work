@@ -99,7 +99,7 @@ describe("API route /api/boards", () => {
       expect(res.status).toBe(500);
     });
 
-    it("returns 503 STORAGE_READONLY on Vercel's read-only filesystem (ENOENT on mkdir)", async () => {
+    it("returns 503 STORAGE_READONLY when mkdir fails with ENOENT (non-durable bundle FS)", async () => {
       const fs = (await import("fs/promises")).default;
       const err = new Error(
         "ENOENT: no such file or directory, mkdir '/var/task/data'"
@@ -115,25 +115,6 @@ describe("API route /api/boards", () => {
       expect(res.status).toBe(503);
       const body = await res.json();
       expect(body.code).toBe("STORAGE_READONLY");
-    });
-
-    it("short-circuits to 503 when VERCEL env is set", async () => {
-      const prev = process.env.VERCEL;
-      process.env.VERCEL = "1";
-      try {
-        const req = new Request("http://localhost/api/boards", {
-          method: "PUT",
-          body: JSON.stringify({ activeBoardId: "a", boards: {} }),
-        });
-        const { PUT } = await import("@/app/api/boards/route");
-        const res = await PUT(req);
-        expect(res.status).toBe(503);
-        const body = await res.json();
-        expect(body.code).toBe("STORAGE_READONLY");
-      } finally {
-        if (prev === undefined) delete process.env.VERCEL;
-        else process.env.VERCEL = prev;
-      }
     });
 
     it("short-circuits to 503 when ZEROBOX_APP_NAME env is set (zeroBox standalone)", async () => {

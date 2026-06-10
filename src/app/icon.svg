@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="To-do list">
+  <rect width="32" height="32" rx="7" fill="#6366f1" />
+  <!-- row 1: completed task -->
+  <rect x="5" y="6.5" width="6" height="6" rx="1.8" fill="#fff" />
+  <path d="M6.4 9.4l1.4 1.4 2.4-2.6" fill="none" stroke="#6366f1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+  <rect x="13.5" y="8" width="12.5" height="2.6" rx="1.3" fill="#fff" />
+  <!-- row 2 -->
+  <rect x="5" y="14.5" width="6" height="6" rx="1.8" fill="none" stroke="#c7d2fe" stroke-width="1.8" />
+  <rect x="13.5" y="16" width="12.5" height="2.6" rx="1.3" fill="#c7d2fe" />
+  <!-- row 3 -->
+  <rect x="5" y="22.5" width="6" height="6" rx="1.8" fill="none" stroke="#c7d2fe" stroke-width="1.8" />
+  <rect x="13.5" y="24" width="10" height="2.6" rx="1.3" fill="#c7d2fe" />
+</svg>
